@@ -158,7 +158,7 @@ Company↔Service is many-to-many with a **focus %** on the join.
 | Observability | **Sentry** (errors) + **Axiom** (logs) | |
 | Rendering strategy | **ISR + on-demand `revalidateTag`** for leaderboards/profiles (worker triggers revalidation after re-score); **SSR** for search + auth-gated dashboards | |
 
-- **Repo:** monorepo — `apps/web`, `apps/worker`, `packages/db` (Prisma schema shared), `packages/ui`.
+- **Repo layout (as built):** two folders at the repo root — `react/` (Next.js 16 App Router frontend, SSR/ISR) and `node/` (Node 22 + TypeScript + Express 5 + Prisma backend: REST API, scraper worker, CIS engine, AI, pg-boss). The frontend fetches the `node/` REST API server-side during SSR/ISR. (This replaces the earlier `apps/web`/`apps/worker` monorepo sketch; the API and the pg-boss worker live in `node/`, run as separate processes.)
 - **Local dev DB (existing `.env`):** `PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=1234 PGDATABASE=techfirms`. Prod adds `DATABASE_URL` (pooled, `?pgbouncer=true`), `DIRECT_URL` (migrations), `ANTHROPIC_API_KEY`, Supabase keys, `STRIPE_*`, storage.
 
 ---

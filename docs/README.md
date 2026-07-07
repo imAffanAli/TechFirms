@@ -21,6 +21,7 @@ This folder is the complete product, design, data, and build documentation. The 
 | [01 — Market & Competitor Analysis](01-market-and-competitor-analysis.md) | Clutch, G2, DesignRush, techreviewer.co and the open KSA/Pakistan lane. |
 | [02 — User Research & Feature-Gap Analysis](02-user-research-and-feature-gaps.md) | What buyers, vendors, and job-seekers actually want; incumbent gaps. |
 | [18 — Roadmap & Phased Build Plan](18-roadmap-and-build-plan.md) | Phased milestones from seed data to self-serve monetization. |
+| [19 — Build Sequence (Implementation Plan)](19-build-sequence.md) | The ordered, checkbox execution plan — what to build first, then next. |
 
 ### Design & UX
 | Doc | Description |

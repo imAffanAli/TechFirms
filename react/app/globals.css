@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode (next-themes sets .dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  TechFirms design tokens — see docs/03-design-system.md and docs/research/_canon.md.
+  Brand: "Signal Teal" primary + "Ink Navy" anchor + "Intelligence Violet" (AI/CIS only).
+  Red is reserved for errors, never as an accent.
+*/
+:root {
+  /* Semantic surface tokens — LIGHT */
+  --background: #ffffff;
+  --foreground: #0f172a;          /* slate-900 */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --muted: #f1f5f9;               /* slate-100 */
+  --muted-foreground: #64748b;    /* slate-500 */
+  --border: #e2e8f0;              /* slate-200 */
+  --input: #e2e8f0;
+  --ring: #0c8a85;                /* teal-600 */
+
+  --primary: #0f6e6b;             /* teal-700 — buttons + links on white (AA 6.06:1) */
+  --primary-foreground: #ffffff;
+  --accent: #6d3ef0;              /* violet-600 — AI / Company Intelligence Score ONLY */
+  --accent-foreground: #ffffff;
+
+  --marketing-bg: #f7f5f2;        /* warm off-white — marketing surfaces only */
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Semantic surface tokens — DARK (navy-tinted, not pure black) */
+  --background: #0a0f1a;
+  --foreground: #f1f5f9;
+  --card: #111a2b;
+  --card-foreground: #f1f5f9;
+  --popover: #1b2740;
+  --muted: #16324a;
+  --muted-foreground: #94a3b8;
+  --border: #26334d;
+  --input: #26334d;
+  --ring: #2cc7bd;                /* teal-400 */
+
+  --primary: #2cc7bd;             /* teal-400 — accent shifts lighter on dark (AA 9.16:1) */
+  --primary-foreground: #0a1b2e;  /* ink navy */
+  --accent: #7c5cfc;              /* violet-500 */
+  --accent-foreground: #0a1b2e;
+}
+
+@theme inline {
+  /* Map semantic tokens to Tailwind utilities (bg-background, text-primary, …) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-marketing: var(--marketing-bg);
+
+  /* Brand scale — Signal Teal */
+  --color-brand-50:  #ecfdfb;
+  --color-brand-100: #cff9f3;
+  --color-brand-200: #a0f0e7;
+  --color-brand-300: #64e1d6;
+  --color-brand-400: #2cc7bd;
+  --color-brand-500: #11a69e;
+  --color-brand-600: #0c8a85;
+  --color-brand-700: #0f6e6b;
+  --color-brand-800: #135755;
+  --color-brand-900: #144846;
+  --color-brand-950: #05302f;
+
+  /* Ink Navy anchor */
+  --color-navy-800: #16324a;
+  --color-navy-900: #0e2438;
+  --color-navy-950: #0a1b2e;
+
+  /* Intelligence Violet (AI / CIS only) */
+  --color-violet-500: #7c5cfc;
+  --color-violet-600: #6d3ef0;
+  --color-violet-700: #5a2fcc;
+
+  /* Semantic */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /* Fonts (Geist display + Inter body + Geist Mono) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-geist-sans), var(--font-inter), sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  /* Tabular figures for ranks, scores, funding */
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
