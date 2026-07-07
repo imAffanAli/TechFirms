@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Environment / secrets (NEVER commit real env files)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Next.js (react/)
+react/.next/
+react/out/
+react/build/
+react/next-env.d.ts
+
+# Node build output (node/)
+node/dist/
+dist/
+*.tsbuildinfo
+
+# Prisma generated client (regenerated via `prisma generate`)
+node/src/generated/
+node/prisma/*.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Testing / coverage
+coverage/
+.nyc_output/
+
+# Caches / build tools
+.turbo/
+.cache/
+.eslintcache
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Misc
+tmp/
+scratch/
