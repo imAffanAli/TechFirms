@@ -22,7 +22,7 @@
     "pipeline:import": "tsx src/scripts/importCompanies.ts",
     "scores:recompute": "tsx src/scripts/recomputeScores.ts",
     "demo:setup": "tsx src/scripts/demoSetup.ts",
-    "deploy:bootstrap": "prisma migrate deploy && npm run db:seed && npm run pipeline:import && npm run scores:recompute && npm run demo:setup"
+    "deploy:bootstrap": "tsx src/scripts/deployBootstrap.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
