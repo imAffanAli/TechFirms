@@ -8,13 +8,14 @@
  */
 import { prisma } from '../db/prisma.js';
 import { generatedSource, type GenCountry } from '../services/sources.js';
+import { realCompanies } from '../services/realCompanies.js';
 import { ingestCompany } from '../services/pipeline.js';
 
 const SOURCE_NAME = 'generated-directory';
 const BASE_URL = 'https://directory.example';
 
 const COUNTRIES: { slug: string; name: string; iso: string; cur: string; mult: number; cities: [string, string][] }[] = [
-  { slug: 'saudi-arabia', name: 'Saudi Arabia', iso: 'SA', cur: 'SAR', mult: 1.4, cities: [['riyadh', 'Riyadh'], ['jeddah', 'Jeddah'], ['dammam', 'Dammam']] },
+  { slug: 'saudi-arabia', name: 'Saudi Arabia', iso: 'SA', cur: 'SAR', mult: 1.4, cities: [['riyadh', 'Riyadh'], ['jeddah', 'Jeddah'], ['dammam', 'Dammam'], ['khobar', 'Khobar']] },
   { slug: 'united-arab-emirates', name: 'United Arab Emirates', iso: 'AE', cur: 'AED', mult: 1.4, cities: [['dubai', 'Dubai'], ['abu-dhabi', 'Abu Dhabi'], ['sharjah', 'Sharjah']] },
   { slug: 'pakistan', name: 'Pakistan', iso: 'PK', cur: 'PKR', mult: 0.45, cities: [['karachi', 'Karachi'], ['lahore', 'Lahore'], ['islamabad', 'Islamabad']] },
   { slug: 'india', name: 'India', iso: 'IN', cur: 'INR', mult: 0.5, cities: [['bengaluru', 'Bengaluru'], ['mumbai', 'Mumbai'], ['hyderabad', 'Hyderabad']] },
@@ -28,9 +29,9 @@ const COUNTRIES: { slug: string; name: string; iso: string; cur: string; mult: n
 ];
 
 const PLAN: GenCountry[] = [
-  { slug: 'saudi-arabia', cities: ['riyadh', 'jeddah', 'dammam'], count: 28, tierBias: 0.8 },
-  { slug: 'united-arab-emirates', cities: ['dubai', 'abu-dhabi', 'sharjah'], count: 28, tierBias: 0.85 },
-  { slug: 'pakistan', cities: ['karachi', 'lahore', 'islamabad'], count: 24, tierBias: 0.6 },
+  { slug: 'saudi-arabia', cities: ['riyadh', 'jeddah', 'dammam', 'khobar'], count: 90, tierBias: 0.72 },
+  { slug: 'united-arab-emirates', cities: ['dubai', 'abu-dhabi', 'sharjah'], count: 40, tierBias: 0.8 },
+  { slug: 'pakistan', cities: ['karachi', 'lahore', 'islamabad'], count: 90, tierBias: 0.55 },
   { slug: 'india', cities: ['bengaluru', 'mumbai', 'hyderabad'], count: 20, tierBias: 0.7 },
   { slug: 'qatar', cities: ['doha'], count: 12, tierBias: 0.75 },
   { slug: 'egypt', cities: ['cairo', 'alexandria'], count: 12, tierBias: 0.6 },
@@ -70,6 +71,13 @@ async function main() {
     const res = await ingestCompany(raw, SOURCE_NAME, BASE_URL);
     tally[res.action] = (tally[res.action] ?? 0) + 1;
     if (++i % 10 === 0) console.log(`  …${i}/${raws.length}`);
+  }
+
+  const reals = realCompanies();
+  console.log(`Ingesting ${reals.length} curated real companies…`);
+  for (const { raw, source } of reals) {
+    const res = await ingestCompany(raw, source, 'https://techfirms.com/curated');
+    tally[res.action] = (tally[res.action] ?? 0) + 1;
   }
 
   const total = await prisma.company.count({ where: { deletedAt: null } });

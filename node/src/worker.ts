@@ -2,10 +2,12 @@ import { PgBoss } from 'pg-boss';
 import { env } from './config/env.js';
 import { createLogger } from './utils/logger.js';
 import { ingestCompany, type RawCompany } from './services/pipeline.js';
+import { recomputeAllScores } from './services/scoringService.js';
 
 const logger = createLogger('worker');
 
 const Q_SCRAPE = 'scrape-company'; // pg-boss v12 queue names: alphanumeric, _ - . / only
+const Q_SCORE = 'score-recompute';
 
 interface ScrapeJob {
   raw: RawCompany;
@@ -39,7 +41,16 @@ async function main(): Promise<void> {
     }
   });
 
-  logger.info(`TechFirms worker ready — listening on queue "${Q_SCRAPE}"`);
+  // Weekly CIS recompute (docs/08)
+  await boss.createQueue(Q_SCORE);
+  await boss.work(Q_SCORE, async () => {
+    logger.info('Recomputing Company Intelligence Scores…');
+    const r = await recomputeAllScores(new Date());
+    logger.info(r, 'CIS recompute complete');
+  });
+  await boss.schedule(Q_SCORE, '0 3 * * 1'); // Mondays 03:00 UTC
+
+  logger.info(`TechFirms worker ready — queues: ${Q_SCRAPE}, ${Q_SCORE}`);
 }
 
 /** Enqueue records for background ingestion (used by scheduled/real-scrape flows). */

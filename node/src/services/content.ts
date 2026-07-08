@@ -43,6 +43,26 @@ const EMP_CONS = [
 ];
 const EMP_ROLES = ['Software Engineer', 'Senior Engineer', 'Product Manager', 'DevOps Engineer', 'UX Designer', 'Data Engineer', 'QA Engineer', 'Engineering Manager'];
 
+export interface RawClientReview { name: string; title: string; company: string; overall: number; body: string; verified: boolean }
+const REV_TITLES = ['CTO', 'VP Engineering', 'Head of Product', 'Founder', 'Director of IT', 'Product Lead', 'CEO', 'Engineering Manager', 'COO', 'Head of Digital'];
+const REV_FIRST = ['A', 'M', 'S', 'R', 'K', 'H', 'T', 'D', 'N', 'F', 'Y', 'Z'];
+const REV_LAST = ['Khan', 'Ali', 'Nasser', 'Haddad', 'Reda', 'Farouk', 'Aziz', 'Salem', 'Malik', 'Sheikh', 'Qureshi', 'Al-Otaibi'];
+const REV_CLIENT = ['Tamkeen', 'GulfPay', 'Noor Health', 'Jahez', 'Rasan', 'Lean', 'Careem', 'Yalla', 'ShopEasy', 'FoodTech ME', 'PayNow', 'LogiGulf', 'RetailME', 'EdTech Co'];
+
+/** Generate `n` client reviews around a quality level (0..1). */
+export function genClientReviews(n: number, quality: number, rand: () => number): RawClientReview[] {
+  const pick = <T>(arr: T[]): T => arr[Math.floor(rand() * arr.length)]!;
+  const base = 3.8 + quality * 1.0; // ~3.8..4.8
+  return Array.from({ length: n }, () => ({
+    name: `${pick(REV_FIRST)}. ${pick(REV_LAST)}`,
+    title: pick(REV_TITLES),
+    company: pick(REV_CLIENT),
+    overall: Math.max(3, Math.min(5, Math.round((base + (rand() - 0.5) * 0.6) * 10) / 10)),
+    body: pick(CLIENT_BODIES),
+    verified: rand() > 0.2,
+  }));
+}
+
 /** Generate `n` employee reviews around a quality level (0..1). `rand` returns 0..1. */
 export function genEmployeeReviews(n: number, quality: number, rand: () => number): RawEmployeeReview[] {
   const pick = <T>(arr: T[]): T => arr[Math.floor(rand() * arr.length)]!;

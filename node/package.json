@@ -19,7 +19,8 @@
     "prisma:studio": "prisma studio",
     "prisma:format": "prisma format",
     "db:seed": "tsx src/scripts/seed.ts",
-    "pipeline:import": "tsx src/scripts/importCompanies.ts"
+    "pipeline:import": "tsx src/scripts/importCompanies.ts",
+    "scores:recompute": "tsx src/scripts/recomputeScores.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
