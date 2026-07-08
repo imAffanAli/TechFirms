@@ -38,6 +38,18 @@ async function main() {
     await prisma.sponsorship.create({ data: { companyId: netsol.id, tier: 'featured', startsAt: new Date(), active: true } });
   }
 
+  // Code Ninja (real Lahore company): correct its public facts + give it a sponsored slot next to Systems.
+  const codeninja = await prisma.company.findUnique({ where: { slug: 'codeninja' } });
+  if (codeninja) {
+    await prisma.company.update({
+      where: { id: codeninja.id },
+      data: { website: 'https://codeninja.pk', domain: 'codeninja.pk', foundedYear: 2014 },
+    });
+    if (pk && !(await prisma.sponsorship.findFirst({ where: { companyId: codeninja.id, tier: 'sponsored' } }))) {
+      await prisma.sponsorship.create({ data: { companyId: codeninja.id, tier: 'sponsored', countryId: pk.id, slotRank: 2, priceAmount: 600, startsAt: new Date(), active: true } });
+    }
+  }
+
   // 4) Sample leads so the admin queue + owner dashboard aren't empty (idempotent by email)
   if (owned && !(await prisma.query.findFirst({ where: { contactEmail: 'bilal@fintechpk.example' } }))) {
     await prisma.query.create({ data: { projectType: 'Mobile banking app', description: 'We need a secure mobile banking app with biometric login for a Pakistani fintech startup.', contactName: 'Bilal Ahmed', contactEmail: 'bilal@fintechpk.example', budgetMin: 30000, budgetMax: 80000, budgetCurrency: 'USD', timeline: '4 months', directCompanyId: owned.id, status: 'New' } });
