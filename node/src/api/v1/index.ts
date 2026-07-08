@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { companiesRouter } from './companies.js';
 import { leaderboardRouter } from './leaderboard.js';
-import { servicesRouter, countriesRouter } from './catalog.js';
+import { servicesRouter, countriesRouter, sitemapRouter } from './catalog.js';
 import { authRouter } from './auth.js';
 import { adminRouter } from './admin.js';
 import { queriesRouter } from './queries.js';
@@ -28,3 +28,4 @@ v1Router.use('/companies', companiesRouter); // GET /companies, GET /companies/:
 v1Router.use('/leaderboard', leaderboardRouter); // GET /leaderboard/:country[/:service]
 v1Router.use('/services', servicesRouter); // GET /services
 v1Router.use('/countries', countriesRouter); // GET /countries
+v1Router.use('/sitemap', sitemapRouter); // GET /sitemap (slugs)

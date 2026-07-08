@@ -234,3 +234,17 @@ export async function listCountries() {
   });
   return rows.map((c) => ({ slug: c.slug, name: c.name, isoCode: c.isoCode, companyCount: c._count.companies }));
 }
+
+/** All slugs for sitemap + programmatic-SEO generation. */
+export async function getSitemapData() {
+  const [companies, services, countries] = await Promise.all([
+    prisma.company.findMany({ where: { deletedAt: null }, select: { slug: true, updatedAt: true } }),
+    prisma.service.findMany({ select: { slug: true } }),
+    prisma.country.findMany({ select: { slug: true } }),
+  ]);
+  return {
+    companies: companies.map((c) => ({ slug: c.slug, updatedAt: c.updatedAt })),
+    services: services.map((s) => s.slug),
+    countries: countries.map((c) => c.slug),
+  };
+}
