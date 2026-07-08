@@ -8,6 +8,8 @@
  */
 import bcrypt from 'bcryptjs';
 import { PrismaClient, type ServiceCategory, type Quadrant } from '@prisma/client';
+import { toCurrency } from '../services/fx.js';
+import { genEmployeeReviews } from '../services/content.js';
 
 const prisma = new PrismaClient();
 
@@ -51,56 +53,56 @@ const r = (name: string, title: string, company: string, overall: number, body: 
 
 const COMPANIES: Demo[] = [
   {
-    slug: 'falcon-ai-labs', name: 'Falcon AI Labs', tagline: 'Applied AI & data platforms for the Gulf', description: 'Falcon AI Labs builds production machine-learning systems and data platforms for enterprises across the GCC, with a focus on Arabic NLP, computer vision, and MLOps.', website: 'https://falconailabs.example', domain: 'falconailabs.example', foundedYear: 2018, empMin: 50, empMax: 100, rateMin: 60, rateMax: 120, minProject: 25000, status: 'verified', country: 'saudi-arabia', city: 'riyadh',
+    slug: 'falcon-ai-labs', name: 'Falcon AI Labs', tagline: 'Applied AI & data platforms for the Gulf', description: 'Falcon AI Labs builds production machine-learning systems and data platforms for enterprises across the GCC, with a focus on Arabic NLP, computer vision, and MLOps.', website: 'https://falconailabs.com', domain: 'falconailabs.com', foundedYear: 2018, empMin: 50, empMax: 100, rateMin: 60, rateMax: 120, minProject: 25000, status: 'verified', country: 'saudi-arabia', city: 'riyadh',
     services: [{ slug: 'ai-development', focus: 60 }, { slug: 'data-engineering', focus: 40 }],
     trust: { domainAgeYears: 7.2, ssl: true, github: 640, certs: ['ISO 27001', 'SOC 2'], funding: 8000000 },
     sentiment: { overall: 4.4, culture: 4.5, comp: 4.1, wlb: 4.2, leadership: 4.3, recommendPct: 88, reviewCount: 64 },
     reviews: [r('Sara Al-Otaibi', 'VP Engineering', 'Tamkeen Retail', 4.9, 'Falcon delivered our Arabic NLP pipeline ahead of schedule and the quality was exceptional.'), r('Omar Nasser', 'CTO', 'GulfPay', 4.7, 'Strong MLOps practices and clear communication throughout a complex 8-month build.'), r('Lena Haddad', 'Head of Data', 'Noor Health', 4.8, 'Rebuilt our data warehouse and cut reporting latency dramatically.'), r('Yousef Amir', 'Product Lead', 'Saned', 4.6, 'Reliable, senior team. Would hire again.'), r('Dana Kurdi', 'COO', 'Mawarid', 4.9, 'Best AI vendor we have worked with in the region.')],
   },
   {
-    slug: 'nimbusstack', name: 'NimbusStack', tagline: 'Cloud & DevOps engineering', description: 'NimbusStack helps organizations migrate to the cloud and modernize delivery pipelines with Kubernetes, IaC, and 24/7 SRE support.', website: 'https://nimbusstack.example', domain: 'nimbusstack.example', foundedYear: 2016, empMin: 100, empMax: 250, rateMin: 45, rateMax: 90, minProject: 20000, status: 'claimed', country: 'saudi-arabia', city: 'riyadh',
+    slug: 'nimbusstack', name: 'NimbusStack', tagline: 'Cloud & DevOps engineering', description: 'NimbusStack helps organizations migrate to the cloud and modernize delivery pipelines with Kubernetes, IaC, and 24/7 SRE support.', website: 'https://nimbusstack.com', domain: 'nimbusstack.com', foundedYear: 2016, empMin: 100, empMax: 250, rateMin: 45, rateMax: 90, minProject: 20000, status: 'claimed', country: 'saudi-arabia', city: 'riyadh',
     services: [{ slug: 'cloud', focus: 55 }, { slug: 'devops', focus: 45 }],
     trust: { domainAgeYears: 9.1, ssl: true, github: 410, certs: ['ISO 27001'], funding: 3000000 },
     sentiment: { overall: 4.1, culture: 4.0, comp: 4.2, wlb: 3.8, leadership: 4.0, recommendPct: 79, reviewCount: 51 },
     reviews: [r('Faisal Reda', 'Director IT', 'Alinma', 4.5, 'Smooth AWS migration with zero downtime.'), r('Huda Salem', 'Eng Manager', 'Jahez', 4.3, 'Solid Kubernetes expertise and good documentation.'), r('Tariq Aziz', 'CTO', 'Rasan', 4.4, 'Their SRE on-call saved us during a launch spike.'), r('Maya Farouk', 'VP Ops', 'Lean', 4.2, 'Dependable partner for infra work.')],
   },
   {
-    slug: 'sadeem-software', name: 'Sadeem Software', tagline: 'Custom software & web platforms', description: 'Sadeem Software designs and builds bespoke web platforms and internal tools for mid-market and enterprise clients in Saudi Arabia.', website: 'https://sadeemsoftware.example', domain: 'sadeemsoftware.example', foundedYear: 2019, empMin: 20, empMax: 50, rateMin: 35, rateMax: 70, minProject: 10000, status: 'unclaimed', country: 'saudi-arabia', city: 'jeddah',
+    slug: 'sadeem-software', name: 'Sadeem Software', tagline: 'Custom software & web platforms', description: 'Sadeem Software designs and builds bespoke web platforms and internal tools for mid-market and enterprise clients in Saudi Arabia.', website: 'https://sadeemsoftware.com', domain: 'sadeemsoftware.com', foundedYear: 2019, empMin: 20, empMax: 50, rateMin: 35, rateMax: 70, minProject: 10000, status: 'unclaimed', country: 'saudi-arabia', city: 'jeddah',
     services: [{ slug: 'custom-software', focus: 60 }, { slug: 'web-development', focus: 40 }],
     trust: { domainAgeYears: 5.4, ssl: true, github: 120, certs: [], funding: 0 },
     sentiment: { overall: 3.9, culture: 3.9, comp: 3.7, wlb: 4.0, leadership: 3.8, recommendPct: 72, reviewCount: 22 },
     reviews: [r('Nabil Q.', 'Owner', 'Souq Plus', 4.2, 'Built our marketplace MVP on time and budget.'), r('Rana K.', 'Marketing Dir', 'Batu', 4.0, 'Good web team, responsive to changes.'), r('Sami D.', 'Founder', 'Wared', 3.8, 'Decent work, some delays mid-project.', false)],
   },
   {
-    slug: 'zayed-digital', name: 'Zayed Digital', tagline: 'Web & product design studio', description: 'Zayed Digital is a Dubai product studio crafting high-conversion web experiences and design systems for regional brands.', website: 'https://zayeddigital.example', domain: 'zayeddigital.example', foundedYear: 2015, empMin: 50, empMax: 100, rateMin: 55, rateMax: 110, minProject: 15000, status: 'verified', country: 'united-arab-emirates', city: 'dubai',
+    slug: 'zayed-digital', name: 'Zayed Digital', tagline: 'Web & product design studio', description: 'Zayed Digital is a Dubai product studio crafting high-conversion web experiences and design systems for regional brands.', website: 'https://zayeddigital.com', domain: 'zayeddigital.com', foundedYear: 2015, empMin: 50, empMax: 100, rateMin: 55, rateMax: 110, minProject: 15000, status: 'verified', country: 'united-arab-emirates', city: 'dubai',
     services: [{ slug: 'web-development', focus: 55 }, { slug: 'ui-ux-design', focus: 45 }],
     trust: { domainAgeYears: 10.2, ssl: true, github: 210, certs: ['ISO 9001'], funding: 1500000 },
     sentiment: { overall: 4.5, culture: 4.6, comp: 4.2, wlb: 4.4, leadership: 4.5, recommendPct: 90, reviewCount: 73 },
     reviews: [r('Aisha Mansoori', 'CMO', 'Majid Group', 4.9, 'Beautiful design work that lifted conversion by 30%.'), r('Khalid R.', 'Head of Product', 'Careem-adjacent', 4.7, 'Strong design systems and front-end craft.'), r('Priya N.', 'Founder', 'Souqly', 4.8, 'A true product partner, not just an agency.'), r('Hassan T.', 'VP Growth', 'Yalla', 4.6, 'Great UX research and delivery.'), r('Mona F.', 'CEO', 'Bloom', 4.7, 'Highly recommended for brand and web.')],
   },
   {
-    slug: 'oryx-mobile', name: 'Oryx Mobile', tagline: 'Native & cross-platform apps', description: 'Oryx Mobile ships iOS, Android, and Flutter apps for startups and enterprises, from prototype to App Store.', website: 'https://oryxmobile.example', domain: 'oryxmobile.example', foundedYear: 2017, empMin: 20, empMax: 50, rateMin: 40, rateMax: 85, minProject: 12000, status: 'claimed', country: 'united-arab-emirates', city: 'dubai',
+    slug: 'oryx-mobile', name: 'Oryx Mobile', tagline: 'Native & cross-platform apps', description: 'Oryx Mobile ships iOS, Android, and Flutter apps for startups and enterprises, from prototype to App Store.', website: 'https://oryxmobile.com', domain: 'oryxmobile.com', foundedYear: 2017, empMin: 20, empMax: 50, rateMin: 40, rateMax: 85, minProject: 12000, status: 'claimed', country: 'united-arab-emirates', city: 'dubai',
     services: [{ slug: 'mobile-app-development', focus: 100 }],
     trust: { domainAgeYears: 8.0, ssl: true, github: 300, certs: [], funding: 500000 },
     sentiment: { overall: 4.0, culture: 4.1, comp: 3.9, wlb: 3.9, leadership: 4.0, recommendPct: 76, reviewCount: 34 },
     reviews: [r('Bilal H.', 'CPO', 'FitGulf', 4.4, 'Delivered a polished fitness app with great performance.'), r('Noura S.', 'Founder', 'Dari', 4.2, 'Smooth Flutter build and helpful post-launch support.'), r('Adeel M.', 'CTO', 'PayNow ME', 4.1, 'Reliable mobile team.')],
   },
   {
-    slug: 'deepgulf-ai', name: 'DeepGulf AI', tagline: 'AI & security engineering', description: 'DeepGulf AI combines applied AI with security engineering, delivering fraud-detection and threat-intelligence systems for finance and government.', website: 'https://deepgulf.example', domain: 'deepgulf.example', foundedYear: 2020, empMin: 20, empMax: 50, rateMin: 65, rateMax: 130, minProject: 30000, status: 'verified', country: 'united-arab-emirates', city: 'abu-dhabi',
+    slug: 'deepgulf-ai', name: 'DeepGulf AI', tagline: 'AI & security engineering', description: 'DeepGulf AI combines applied AI with security engineering, delivering fraud-detection and threat-intelligence systems for finance and government.', website: 'https://deepgulf.com', domain: 'deepgulf.com', foundedYear: 2020, empMin: 20, empMax: 50, rateMin: 65, rateMax: 130, minProject: 30000, status: 'verified', country: 'united-arab-emirates', city: 'abu-dhabi',
     services: [{ slug: 'ai-development', focus: 55 }, { slug: 'cybersecurity', focus: 45 }],
     trust: { domainAgeYears: 4.6, ssl: true, github: 520, certs: ['SOC 2', 'ISO 27001'], funding: 12000000 },
     sentiment: { overall: 4.6, culture: 4.6, comp: 4.5, wlb: 4.3, leadership: 4.6, recommendPct: 92, reviewCount: 48 },
     reviews: [r('Reem A.', 'CISO', 'First Abu Dhabi-adjacent', 4.9, 'Their fraud models measurably reduced chargebacks.'), r('Sultan K.', 'Head of Risk', 'GovTech', 4.8, 'Top-tier security and AI talent.'), r('Layla M.', 'VP Data', 'Etisalat-adjacent', 4.7, 'Rigorous, thoughtful engineering.'), r('Omar B.', 'CTO', 'Tabby-adjacent', 4.6, 'Excellent applied AI partner.'), r('Zaid H.', 'Director', 'ADGM co', 4.8, 'Delivered a complex system flawlessly.')],
   },
   {
-    slug: 'indus-systems', name: 'Indus Systems', tagline: 'Enterprise software & staff augmentation', description: 'Indus Systems provides custom enterprise software and dedicated engineering teams to clients across the Middle East and North America from Karachi.', website: 'https://indussystems.example', domain: 'indussystems.example', foundedYear: 2012, empMin: 250, empMax: 500, rateMin: 25, rateMax: 55, minProject: 15000, status: 'verified', country: 'pakistan', city: 'karachi',
+    slug: 'indus-systems', name: 'Indus Systems', tagline: 'Enterprise software & staff augmentation', description: 'Indus Systems provides custom enterprise software and dedicated engineering teams to clients across the Middle East and North America from Karachi.', website: 'https://indussystems.com', domain: 'indussystems.com', foundedYear: 2012, empMin: 250, empMax: 500, rateMin: 25, rateMax: 55, minProject: 15000, status: 'verified', country: 'pakistan', city: 'karachi',
     services: [{ slug: 'custom-software', focus: 55 }, { slug: 'it-staff-augmentation', focus: 45 }],
     trust: { domainAgeYears: 12.5, ssl: true, github: 380, certs: ['ISO 27001', 'CMMI Level 3'], funding: 0 },
     sentiment: { overall: 4.0, culture: 4.0, comp: 3.8, wlb: 3.9, leadership: 3.9, recommendPct: 74, reviewCount: 96 },
     reviews: [r('James P.', 'VP Eng', 'US Fintech', 4.4, 'Great value dedicated team, strong communication across time zones.'), r('Ahmed S.', 'CTO', 'Gulf Logistics', 4.3, 'Delivered a large ERP integration reliably.'), r('Emily R.', 'Director', 'HealthCo', 4.2, 'Solid engineers, easy to scale the team up.'), r('Bilal N.', 'Founder', 'EdTechPK', 4.1, 'Good long-term partner.'), r('Sana T.', 'PM', 'RetailME', 4.0, 'Dependable delivery.', false)],
   },
   {
-    slug: 'lahore-labs', name: 'Lahore Labs', tagline: 'Web, mobile & AI product teams', description: 'Lahore Labs is a fast-growing product studio building web, mobile, and AI-powered features for startups in Pakistan, the GCC, and Europe.', website: 'https://lahorelabs.example', domain: 'lahorelabs.example', foundedYear: 2019, empMin: 50, empMax: 100, rateMin: 22, rateMax: 50, minProject: 8000, status: 'claimed', country: 'pakistan', city: 'lahore',
+    slug: 'lahore-labs', name: 'Lahore Labs', tagline: 'Web, mobile & AI product teams', description: 'Lahore Labs is a fast-growing product studio building web, mobile, and AI-powered features for startups in Pakistan, the GCC, and Europe.', website: 'https://lahorelabs.com', domain: 'lahorelabs.com', foundedYear: 2019, empMin: 50, empMax: 100, rateMin: 22, rateMax: 50, minProject: 8000, status: 'claimed', country: 'pakistan', city: 'lahore',
     services: [{ slug: 'web-development', focus: 40 }, { slug: 'mobile-app-development', focus: 35 }, { slug: 'ai-development', focus: 25 }],
     trust: { domainAgeYears: 5.9, ssl: true, github: 260, certs: [], funding: 750000 },
     sentiment: { overall: 4.2, culture: 4.3, comp: 3.9, wlb: 4.1, leadership: 4.2, recommendPct: 81, reviewCount: 41 },
@@ -148,6 +150,7 @@ async function main() {
 
   console.log('Seeding countries & cities…');
   const countryIdBySlug = new Map<string, string>();
+  const countryCurrencyBySlug = new Map<string, string>();
   const cityIdByKey = new Map<string, string>();
   for (const co of COUNTRIES) {
     const country = await prisma.country.upsert({
@@ -156,6 +159,7 @@ async function main() {
       create: { slug: co.slug, name: co.name, isoCode: co.isoCode, currency: co.currency, priceMultiplier: co.priceMultiplier },
     });
     countryIdBySlug.set(co.slug, country.id);
+    countryCurrencyBySlug.set(co.slug, co.currency);
     for (const city of co.cities) {
       const rec = await prisma.city.upsert({
         where: { countryId_slug: { countryId: country.id, slug: city.slug } },
@@ -170,19 +174,23 @@ async function main() {
   for (const c of COMPANIES) {
     const hqCountryId = countryIdBySlug.get(c.country)!;
     const hqCityId = cityIdByKey.get(`${c.country}/${c.city}`)!;
+    const cur = countryCurrencyBySlug.get(c.country)!;
+    const rateMin = toCurrency(c.rateMin, cur);
+    const rateMax = toCurrency(c.rateMax, cur);
+    const minProj = toCurrency(c.minProject, cur);
     const company = await prisma.company.upsert({
       where: { slug: c.slug },
       update: {
         name: c.name, tagline: c.tagline, description: c.description, website: c.website, domain: c.domain,
         foundedYear: c.foundedYear, employeeRangeMin: c.empMin, employeeRangeMax: c.empMax,
-        hourlyRateMin: c.rateMin, hourlyRateMax: c.rateMax, minProjectSize: c.minProject,
+        hourlyRateMin: rateMin, hourlyRateMax: rateMax, rateCurrency: cur, minProjectSize: minProj,
         listingStatus: c.status, claimed: c.status !== 'unclaimed', verified: c.status === 'verified',
         hqCountryId, hqCityId, source: 'seed', sourceId: c.slug,
       },
       create: {
         slug: c.slug, name: c.name, tagline: c.tagline, description: c.description, website: c.website, domain: c.domain,
         foundedYear: c.foundedYear, employeeRangeMin: c.empMin, employeeRangeMax: c.empMax,
-        hourlyRateMin: c.rateMin, hourlyRateMax: c.rateMax, minProjectSize: c.minProject,
+        hourlyRateMin: rateMin, hourlyRateMax: rateMax, rateCurrency: cur, minProjectSize: minProj,
         listingStatus: c.status, claimed: c.status !== 'unclaimed', verified: c.status === 'verified',
         hqCountryId, hqCityId, source: 'seed', sourceId: c.slug,
       },
@@ -193,6 +201,7 @@ async function main() {
     await prisma.customerReview.deleteMany({ where: { companyId: company.id } });
     await prisma.trustSignal.deleteMany({ where: { companyId: company.id } });
     await prisma.employeeSentiment.deleteMany({ where: { companyId: company.id } });
+    await prisma.employeeReview.deleteMany({ where: { companyId: company.id } });
     await prisma.intelligenceScore.deleteMany({ where: { companyId: company.id } });
     await prisma.officeLocation.deleteMany({ where: { companyId: company.id } });
 
@@ -227,6 +236,11 @@ async function main() {
         reviewCount: c.sentiment.reviewCount, sourceName: 'glassdoor', sourceUrl: `https://www.glassdoor.com/${c.slug}`, asOf: new Date('2026-06-01'),
       },
     });
+
+    const empQuality = Math.max(0, Math.min(1, (c.sentiment.overall - 3.5) / 1.5));
+    for (const er of genEmployeeReviews(4, empQuality, Math.random)) {
+      await prisma.employeeReview.create({ data: { companyId: company.id, rating: Math.round(er.rating * 100), title: er.title, pros: er.pros, cons: er.cons, role: er.role, isCurrentEmployee: er.current, source: 'sample', sourceUrl: `https://www.glassdoor.com/${c.slug}` } });
+    }
 
     const s = computeScore(c);
     await prisma.intelligenceScore.create({

@@ -168,6 +168,7 @@ model Company {
   offices           OfficeLocation[]
   reviews           CustomerReview[]
   employeeSentiment EmployeeSentiment[]
+  employeeReviews   EmployeeReview[]
   trustSignals      TrustSignal[]
   intelligenceScore IntelligenceScore?
   scoreSnapshots    ScoreSnapshot[]
@@ -293,6 +294,27 @@ model EmployeeSentiment {
 
   @@unique([companyId, sourceName, asOf])
   @@index([companyId])
+}
+
+// Individual employee reviews (demo/sample content, or native anonymous reviews in v2).
+// Aggregates live in EmployeeSentiment; this holds the readable pros/cons.
+model EmployeeReview {
+  id                String   @id @default(cuid())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  rating            Int // 100–500
+  title             String
+  pros              String   @db.Text
+  cons              String   @db.Text
+  role              String? // job title
+  isCurrentEmployee Boolean  @default(true)
+  source            String   @default("sample") // "sample" (demo) | "native" (v2 first-party)
+  sourceUrl         String?
+  reviewedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId, rating])
 }
 
 // ─────────────────────────── Signal 3: trust signals ───────────────────────────

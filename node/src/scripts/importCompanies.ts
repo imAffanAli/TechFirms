@@ -17,16 +17,28 @@ const COUNTRIES: { slug: string; name: string; iso: string; cur: string; mult: n
   { slug: 'saudi-arabia', name: 'Saudi Arabia', iso: 'SA', cur: 'SAR', mult: 1.4, cities: [['riyadh', 'Riyadh'], ['jeddah', 'Jeddah'], ['dammam', 'Dammam']] },
   { slug: 'united-arab-emirates', name: 'United Arab Emirates', iso: 'AE', cur: 'AED', mult: 1.4, cities: [['dubai', 'Dubai'], ['abu-dhabi', 'Abu Dhabi'], ['sharjah', 'Sharjah']] },
   { slug: 'pakistan', name: 'Pakistan', iso: 'PK', cur: 'PKR', mult: 0.45, cities: [['karachi', 'Karachi'], ['lahore', 'Lahore'], ['islamabad', 'Islamabad']] },
+  { slug: 'india', name: 'India', iso: 'IN', cur: 'INR', mult: 0.5, cities: [['bengaluru', 'Bengaluru'], ['mumbai', 'Mumbai'], ['hyderabad', 'Hyderabad']] },
   { slug: 'qatar', name: 'Qatar', iso: 'QA', cur: 'QAR', mult: 1.4, cities: [['doha', 'Doha']] },
   { slug: 'egypt', name: 'Egypt', iso: 'EG', cur: 'EGP', mult: 0.5, cities: [['cairo', 'Cairo'], ['alexandria', 'Alexandria']] },
+  { slug: 'turkey', name: 'Türkiye', iso: 'TR', cur: 'TRY', mult: 0.7, cities: [['istanbul', 'Istanbul'], ['ankara', 'Ankara']] },
+  { slug: 'jordan', name: 'Jordan', iso: 'JO', cur: 'JOD', mult: 0.8, cities: [['amman', 'Amman']] },
+  { slug: 'kuwait', name: 'Kuwait', iso: 'KW', cur: 'KWD', mult: 1.4, cities: [['kuwait-city', 'Kuwait City']] },
+  { slug: 'bahrain', name: 'Bahrain', iso: 'BH', cur: 'BHD', mult: 1.3, cities: [['manama', 'Manama']] },
+  { slug: 'oman', name: 'Oman', iso: 'OM', cur: 'OMR', mult: 1.2, cities: [['muscat', 'Muscat']] },
 ];
 
 const PLAN: GenCountry[] = [
-  { slug: 'saudi-arabia', cities: ['riyadh', 'jeddah', 'dammam'], count: 10, tierBias: 0.8 },
-  { slug: 'united-arab-emirates', cities: ['dubai', 'abu-dhabi', 'sharjah'], count: 10, tierBias: 0.85 },
-  { slug: 'pakistan', cities: ['karachi', 'lahore', 'islamabad'], count: 10, tierBias: 0.6 },
-  { slug: 'qatar', cities: ['doha'], count: 6, tierBias: 0.75 },
-  { slug: 'egypt', cities: ['cairo', 'alexandria'], count: 6, tierBias: 0.6 },
+  { slug: 'saudi-arabia', cities: ['riyadh', 'jeddah', 'dammam'], count: 28, tierBias: 0.8 },
+  { slug: 'united-arab-emirates', cities: ['dubai', 'abu-dhabi', 'sharjah'], count: 28, tierBias: 0.85 },
+  { slug: 'pakistan', cities: ['karachi', 'lahore', 'islamabad'], count: 24, tierBias: 0.6 },
+  { slug: 'india', cities: ['bengaluru', 'mumbai', 'hyderabad'], count: 20, tierBias: 0.7 },
+  { slug: 'qatar', cities: ['doha'], count: 12, tierBias: 0.75 },
+  { slug: 'egypt', cities: ['cairo', 'alexandria'], count: 12, tierBias: 0.6 },
+  { slug: 'turkey', cities: ['istanbul', 'ankara'], count: 12, tierBias: 0.65 },
+  { slug: 'jordan', cities: ['amman'], count: 8, tierBias: 0.6 },
+  { slug: 'kuwait', cities: ['kuwait-city'], count: 8, tierBias: 0.7 },
+  { slug: 'bahrain', cities: ['manama'], count: 6, tierBias: 0.65 },
+  { slug: 'oman', cities: ['muscat'], count: 6, tierBias: 0.6 },
 ];
 
 async function ensureGeography() {

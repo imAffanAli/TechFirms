@@ -1,23 +1,15 @@
 import type { RawCompany, RawReview } from './pipeline.js';
+import { CLIENT_BODIES, genEmployeeReviews } from './content.js';
 
 // ─────────────────────────── Generated source ───────────────────────────
 // Produces realistic RawCompany records to exercise the ingest pipeline and
 // populate the directory for development. In production this is replaced by the
 // httpCheerioSource (see scraper.ts) pointed at a real, robots-permitted source.
 
-const PREFIX = ['Nimbus', 'Falcon', 'Oryx', 'Cedar', 'Zenith', 'Atlas', 'Vertex', 'Lumen', 'Quanta', 'Delta', 'Sigma', 'Nova', 'Pulse', 'Orbit', 'Aster', 'Cobalt', 'Ember', 'Ionis', 'Kite', 'Mirage', 'Solace', 'Tesser', 'Vantage', 'Halcyon', 'Beacon', 'Cinder', 'Dune', 'Fathom', 'Granite', 'Harbor'];
+const PREFIX = ['Nimbus', 'Falcon', 'Oryx', 'Cedar', 'Zenith', 'Atlas', 'Vertex', 'Lumen', 'Quanta', 'Delta', 'Sigma', 'Nova', 'Pulse', 'Orbit', 'Aster', 'Cobalt', 'Ember', 'Ionis', 'Kite', 'Mirage', 'Solace', 'Tesser', 'Vantage', 'Halcyon', 'Beacon', 'Cinder', 'Dune', 'Fathom', 'Granite', 'Harbor', 'Onyx', 'Pyxis', 'Rune', 'Slate', 'Terra', 'Umbra', 'Vela', 'Wisp', 'Xenon', 'Yotta', 'Zephyr', 'Argon', 'Basalt', 'Coral', 'Drift', 'Flint', 'Grove', 'Helix', 'Indigo', 'Juno', 'Kepler', 'Larch', 'Maple', 'Nexus', 'Opal'];
 const SUFFIX = ['Labs', 'Systems', 'Digital', 'Technologies', 'Software', 'Solutions', 'Studio', 'Works', 'AI', 'Cloud', 'Networks', 'Group'];
 const SERVICE_SLUGS = ['ai-development', 'custom-software', 'web-development', 'mobile-app-development', 'cloud', 'devops', 'data-engineering', 'cybersecurity', 'it-staff-augmentation', 'ui-ux-design'];
-const REVIEW_BODIES = [
-  'Delivered on time and communicated clearly throughout the engagement.',
-  'Strong senior team; the quality of the work exceeded our expectations.',
-  'Great value and a genuinely helpful, responsive partner.',
-  'Solid engineering and thoughtful architecture decisions.',
-  'Smooth delivery with good documentation and handover.',
-  'Reliable long-term partner — we have hired them for multiple projects.',
-  'Helped us ship faster without sacrificing quality.',
-  'Professional, transparent, and easy to work with across time zones.',
-];
+const TLDS = ['com', 'io', 'ai', 'co', 'tech', 'dev'];
 const TITLES = ['CTO', 'VP Engineering', 'Head of Product', 'Founder', 'Director of IT', 'Product Lead', 'CEO', 'Engineering Manager'];
 const CLIENT_CO = ['Tamkeen', 'GulfPay', 'Noor Health', 'Saned', 'Jahez', 'Rasan', 'Lean', 'Careem-adjacent', 'Yalla', 'Bloom', 'ShopEasy', 'CareConnect', 'FoodTechME', 'PayNow', 'LogiGulf'];
 
@@ -58,16 +50,17 @@ export function generatedSource(countries: GenCountry[]): RawCompany[] {
       const nReviews = 3 + Math.floor(rng() * 5);
       const reviews: RawReview[] = Array.from({ length: nReviews }, () => {
         const overall = Math.max(3, Math.min(5, Math.round((base + (rng() - 0.5) * 0.6) * 10) / 10));
-        return { name: `${pick(['A', 'M', 'S', 'R', 'K', 'H', 'T', 'D'])}. ${pick(['Khan', 'Ali', 'Nasser', 'Haddad', 'Reda', 'Farouk', 'Aziz', 'Salem'])}`, title: pick(TITLES), company: pick(CLIENT_CO), overall, body: pick(REVIEW_BODIES), verified: rng() > 0.25 };
+        return { name: `${pick(['A', 'M', 'S', 'R', 'K', 'H', 'T', 'D'])}. ${pick(['Khan', 'Ali', 'Nasser', 'Haddad', 'Reda', 'Farouk', 'Aziz', 'Salem'])}`, title: pick(TITLES), company: pick(CLIENT_CO), overall, body: pick(CLIENT_BODIES), verified: rng() > 0.25 };
       });
 
       const domainBase = name.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      const domain = `${domainBase}.${pick(TLDS)}`;
       out.push({
         sourceId: `gen-${co.slug}-${i}`,
         url: `https://directory.example/${co.slug}/${domainBase}`,
         name,
-        website: `https://${domainBase}.example`,
-        domain: `${domainBase}.example`,
+        website: `https://${domain}`,
+        domain,
         countrySlug: co.slug,
         citySlug: pick(co.cities),
         services,
@@ -76,8 +69,9 @@ export function generatedSource(countries: GenCountry[]): RawCompany[] {
         hourlyRate: (() => { const lo = Math.round(between(20, 70)); return [lo, lo + Math.round(between(25, 60))] as [number, number]; })(),
         minProject: pick([5000, 8000, 10000, 15000, 20000, 25000]),
         reviews,
+        employeeReviews: genEmployeeReviews(3 + Math.floor(rng() * 4), quality, rng),
         sentiment: { overall: Math.round((3.6 + quality * 0.9) * 10) / 10, culture: Math.round((3.7 + quality * 0.8) * 10) / 10, comp: Math.round((3.6 + quality * 0.7) * 10) / 10, wlb: Math.round((3.7 + quality * 0.6) * 10) / 10, leadership: Math.round((3.7 + quality * 0.8) * 10) / 10, recommendPct: Math.round(65 + quality * 30), reviewCount: Math.round(between(15, 110)) },
-        trust: { ssl: true, github: Math.round(between(40, 700)), certs: rng() > 0.5 ? pick([['ISO 27001'], ['ISO 27001', 'SOC 2'], ['CMMI Level 3'], []]) : [], funding: rng() > 0.5 ? Math.round(between(0, 12000000)) : 0 },
+        trust: { domainAgeYears: Math.round(between(3, 14) * 10) / 10, ssl: true, github: Math.round(between(40, 700)), certs: rng() > 0.5 ? pick([['ISO 27001'], ['ISO 27001', 'SOC 2'], ['CMMI Level 3'], []]) : [], funding: rng() > 0.5 ? Math.round(between(0, 12000000)) : 0 },
       });
     }
   }

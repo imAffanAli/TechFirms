@@ -3,6 +3,8 @@ import type { Prisma, Quadrant } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { env } from '../config/env.js';
 import { createLogger } from '../utils/logger.js';
+import { toCurrency } from './fx.js';
+import type { RawEmployeeReview } from './content.js';
 
 const logger = createLogger('pipeline');
 
@@ -19,9 +21,10 @@ export interface RawCompany {
   services: { slug: string; focus: number }[];
   foundedYear: number;
   employeeRange: [number, number];
-  hourlyRate: [number, number];
-  minProject: number;
+  hourlyRate: [number, number]; // USD; converted to the HQ country currency on ingest
+  minProject: number; // USD
   reviews: RawReview[];
+  employeeReviews: RawEmployeeReview[];
   sentiment: { overall: number; culture: number; comp: number; wlb: number; leadership: number; recommendPct: number; reviewCount: number };
   trust: { domainAgeYears?: number; ssl?: boolean; github?: number; certs: string[]; funding: number };
 }
@@ -119,20 +122,28 @@ export async function ingestCompany(raw: RawCompany, sourceName: string, baseUrl
   const existing = await prisma.company.findUnique({ where: { source_sourceId: { source: sourceName, sourceId: raw.sourceId } } });
   const guardClaimed = existing?.claimed === true;
 
+  // rates are quoted in the HQ country's currency for display
+  const cur = country.currency;
+  const rateMin = toCurrency(raw.hourlyRate[0], cur);
+  const rateMax = toCurrency(raw.hourlyRate[1], cur);
+  const minProj = toCurrency(raw.minProject, cur);
+  const tagline = `${raw.services[0]?.slug.replace(/-/g, ' ') ?? 'technology'} specialists`;
+
   const facts: Prisma.CompanyUpdateInput = guardClaimed
     ? {} // claimed: leave owner-managed fields untouched
     : {
         name: raw.name,
-        tagline: `${raw.services[0]?.slug.replace(/-/g, ' ') ?? 'technology'} specialists`,
+        tagline,
         description,
         website: raw.website,
         domain: raw.domain,
         foundedYear: raw.foundedYear,
         employeeRangeMin: raw.employeeRange[0],
         employeeRangeMax: raw.employeeRange[1],
-        hourlyRateMin: raw.hourlyRate[0],
-        hourlyRateMax: raw.hourlyRate[1],
-        minProjectSize: raw.minProject,
+        hourlyRateMin: rateMin,
+        hourlyRateMax: rateMax,
+        rateCurrency: cur,
+        minProjectSize: minProj,
         hqCountry: { connect: { id: country.id } },
         ...(city ? { hqCity: { connect: { id: city.id } } } : {}),
       };
@@ -144,16 +155,17 @@ export async function ingestCompany(raw: RawCompany, sourceName: string, baseUrl
     create: {
       slug,
       name: raw.name,
-      tagline: `${raw.services[0]?.slug.replace(/-/g, ' ') ?? 'technology'} specialists`,
+      tagline,
       description,
       website: raw.website,
       domain: raw.domain,
       foundedYear: raw.foundedYear,
       employeeRangeMin: raw.employeeRange[0],
       employeeRangeMax: raw.employeeRange[1],
-      hourlyRateMin: raw.hourlyRate[0],
-      hourlyRateMax: raw.hourlyRate[1],
-      minProjectSize: raw.minProject,
+      hourlyRateMin: rateMin,
+      hourlyRateMax: rateMax,
+      rateCurrency: cur,
+      minProjectSize: minProj,
       listingStatus: 'unclaimed',
       source: sourceName,
       sourceId: raw.sourceId,
@@ -175,6 +187,7 @@ export async function ingestCompany(raw: RawCompany, sourceName: string, baseUrl
     await prisma.customerReview.deleteMany({ where: { companyId: company.id, source: 'imported' } });
     await prisma.trustSignal.deleteMany({ where: { companyId: company.id } });
     await prisma.employeeSentiment.deleteMany({ where: { companyId: company.id } });
+    await prisma.employeeReview.deleteMany({ where: { companyId: company.id } });
     await prisma.intelligenceScore.deleteMany({ where: { companyId: company.id } });
 
     for (const s of raw.services) {
@@ -193,6 +206,9 @@ export async function ingestCompany(raw: RawCompany, sourceName: string, baseUrl
     }
     await prisma.trustSignal.create({ data: { companyId: company.id, domainAgeYears: enrichedAge, sslValid: raw.trust.ssl ?? true, githubOrgActivity: raw.trust.github ?? null, certifications: raw.trust.certs, fundingRaised: raw.trust.funding } });
     await prisma.employeeSentiment.create({ data: { companyId: company.id, overallRating: raw.sentiment.overall, culture: raw.sentiment.culture, compensation: raw.sentiment.comp, workLifeBalance: raw.sentiment.wlb, leadership: raw.sentiment.leadership, recommendPct: raw.sentiment.recommendPct, reviewCount: raw.sentiment.reviewCount, sourceName: 'glassdoor', sourceUrl: `https://www.glassdoor.com/${kebab(raw.name)}`, asOf: new Date('2026-06-01') } });
+    for (const er of raw.employeeReviews) {
+      await prisma.employeeReview.create({ data: { companyId: company.id, rating: Math.round(er.rating * 100), title: er.title, pros: er.pros, cons: er.cons, role: er.role, isCurrentEmployee: er.current, source: 'sample', sourceUrl: `https://www.glassdoor.com/${kebab(raw.name)}` } });
+    }
 
     const s = computeScore(raw, enrichedAge);
     await prisma.intelligenceScore.create({ data: { companyId: company.id, ...s, justification: `${raw.name} scores ${s.cis}/100 (${s.quadrant.replace('_', ' ')}) from ${raw.reviews.length} reviews and enriched trust signals. Demo score pending the full engine.` } });

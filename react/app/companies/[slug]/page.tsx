@@ -211,6 +211,28 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
             ) : (
               <p className="mt-3 text-muted-foreground">No employee-sentiment data yet.</p>
             )}
+
+            {c.employeeReviews.length > 0 && (
+              <div className="mt-5">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Employee reviews</h3>
+                <div className="mt-3 space-y-3">
+                  {c.employeeReviews.map((er) => (
+                    <div key={er.id} className="rounded-lg border border-border bg-card p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-medium">“{er.title}”</div>
+                        <StarRating value={er.rating} size={13} />
+                      </div>
+                      <div className="text-xs text-muted-foreground">{[er.role, er.isCurrentEmployee ? "Current employee" : "Former employee"].filter(Boolean).join(" · ")}</div>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        <p className="text-sm"><span className="font-medium text-success">Pros:</span> <span className="text-muted-foreground">{er.pros}</span></p>
+                        <p className="text-sm"><span className="font-medium text-danger">Cons:</span> <span className="text-muted-foreground">{er.cons}</span></p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Sample employee reviews shown for the demo. In production these are native anonymous reviews (v2); external aggregates always link out to the source.</p>
+              </div>
+            )}
           </section>
 
           {/* Trust signals */}

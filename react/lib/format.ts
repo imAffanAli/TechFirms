@@ -1,13 +1,17 @@
 import type { Quadrant } from "./types";
 
-const CUR: Record<string, string> = { USD: "$", SAR: "SAR ", AED: "AED ", PKR: "PKR ", EUR: "€", GBP: "£" };
+const CUR: Record<string, string> = {
+  USD: "$", SAR: "SAR ", AED: "AED ", PKR: "PKR ", QAR: "QAR ", EGP: "EGP ", INR: "₹",
+  TRY: "₺", JOD: "JOD ", BHD: "BHD ", KWD: "KWD ", OMR: "OMR ", EUR: "€", GBP: "£",
+};
 const sym = (c: string) => CUR[c] ?? `${c} `;
+const grp = (n: number) => n.toLocaleString("en-US");
 
 export function fmtRate(min: number | null, max: number | null, currency: string): string | null {
   if (min == null && max == null) return null;
   const s = sym(currency);
-  if (min != null && max != null) return `${s}${min}–${max}/hr`;
-  return `${s}${min ?? max}/hr`;
+  if (min != null && max != null) return `${s}${grp(min)}–${grp(max)}/hr`;
+  return `${s}${grp((min ?? max)!)}/hr`;
 }
 
 export function fmtMoney(v: number | null, currency = "USD"): string | null {

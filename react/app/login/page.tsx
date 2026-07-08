@@ -1,11 +1,10 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 function LoginForm() {
-  const router = useRouter();
   const next = useSearchParams().get("next") ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,8 +21,8 @@ function LoginForm() {
       body: JSON.stringify({ email, password }),
     });
     if (res.ok) {
-      router.push(next);
-      router.refresh();
+      // Full navigation so the persistent header re-reads the new session.
+      window.location.href = next;
     } else {
       const d = await res.json().catch(() => ({}));
       setError(d?.error?.message ?? "Login failed");

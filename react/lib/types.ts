@@ -15,6 +15,7 @@ export interface CompanyCard {
   name: string;
   logoUrl: string | null;
   tagline: string | null;
+  website: string | null;
   listingStatus: ListingStatus;
   verified: boolean;
   claimed: boolean;
@@ -57,6 +58,17 @@ export interface Review {
   verified: boolean;
   reviewedAt: string;
   projectDurationMonths: number | null;
+}
+
+export interface EmployeeReview {
+  id: string;
+  rating: number;
+  title: string;
+  pros: string;
+  cons: string;
+  role: string | null;
+  isCurrentEmployee: boolean;
+  reviewedAt: string;
 }
 
 export interface EmployeeSentiment {
@@ -119,6 +131,7 @@ export interface CompanyDetail {
   services: ServiceRef[];
   intelligenceScore: IntelligenceScore | null;
   reviews: Review[];
+  employeeReviews: EmployeeReview[];
   employeeSentiment: EmployeeSentiment | null;
   trustSignals: TrustSignals | null;
   offices: { country: PlaceRef | null; city: PlaceRef | null; isHeadquarters: boolean }[];

@@ -26,6 +26,7 @@ function mapCard(c: Prisma.CompanyGetPayload<{ include: typeof companyListInclud
     name: c.name,
     logoUrl: c.logoUrl,
     tagline: c.tagline,
+    website: c.website,
     listingStatus: c.listingStatus,
     verified: c.verified,
     claimed: c.claimed,
@@ -107,8 +108,10 @@ export async function getCompanyBySlug(slug: string) {
       hqCity: true,
       services: { include: { service: true }, orderBy: { focusPct: 'desc' } },
       intelligenceScore: true,
-      reviews: { where: { deletedAt: null }, orderBy: { reviewedAt: 'desc' } },
+      // all reviews (accurate count/avg); best + richest ordered first, sliced for display
+      reviews: { where: { deletedAt: null }, orderBy: [{ ratingOverall: 'desc' }, { reviewedAt: 'desc' }] },
       employeeSentiment: { orderBy: { asOf: 'desc' }, take: 1 },
+      employeeReviews: { orderBy: { rating: 'desc' }, take: 5 },
       trustSignals: { orderBy: { asOf: 'desc' }, take: 1 },
       offices: { include: { country: true, city: true } },
     },
@@ -155,7 +158,7 @@ export async function getCompanyBySlug(slug: string) {
           justification: c.intelligenceScore.justification,
         }
       : null,
-    reviews: c.reviews.map((r) => ({
+    reviews: c.reviews.slice(0, 12).map((r) => ({
       id: r.id,
       reviewerName: r.reviewerName,
       reviewerTitle: r.reviewerTitle,
@@ -169,6 +172,16 @@ export async function getCompanyBySlug(slug: string) {
       verified: r.verified,
       reviewedAt: r.reviewedAt,
       projectDurationMonths: r.projectDurationMonths,
+    })),
+    employeeReviews: c.employeeReviews.map((er) => ({
+      id: er.id,
+      rating: stars(er.rating),
+      title: er.title,
+      pros: er.pros,
+      cons: er.cons,
+      role: er.role,
+      isCurrentEmployee: er.isCurrentEmployee,
+      reviewedAt: er.reviewedAt,
     })),
     employeeSentiment: es
       ? {

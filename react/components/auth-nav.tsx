@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { SessionUser } from "@/lib/types";
 
 export function AuthNav() {
-  const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -28,9 +26,7 @@ export function AuthNav() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    router.refresh();
-    router.push("/");
+    window.location.href = "/";
   }
 
   if (!ready) return <span className="inline-block w-14" />;

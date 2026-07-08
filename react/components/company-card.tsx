@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, Globe } from "lucide-react";
 import type { CompanyCard as Card } from "@/lib/types";
 import { fmtRate, fmtEmployees, fmtMoney, quadrantLabel } from "@/lib/format";
 import { LogoAvatar } from "@/components/logo-avatar";
@@ -60,17 +60,24 @@ export function CompanyCard({ c }: { c: Card }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
           {location && (
             <>
-              <MapPin size={14} /> {location}
+              <MapPin size={14} className="shrink-0" /> <span className="truncate">{location}</span>
             </>
           )}
         </span>
-        <Link href={`/companies/${c.slug}`} className="text-sm font-medium text-primary hover:underline">
-          View profile →
-        </Link>
+        <div className="flex shrink-0 items-center gap-3">
+          {c.website && (
+            <a href={c.website} target="_blank" rel="nofollow noopener" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <Globe size={14} /> Visit site
+            </a>
+          )}
+          <Link href={`/companies/${c.slug}`} className="text-sm font-medium text-primary hover:underline">
+            View profile →
+          </Link>
+        </div>
       </div>
     </div>
   );
