@@ -1,10 +1,12 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { pinoHttp } from 'pino-http';
 import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { v1Router } from './api/v1/index.js';
+import { authenticate } from './middleware/auth.js';
 import { notFound, errorHandler } from './middleware/error.js';
 
 const app = express();
@@ -18,7 +20,9 @@ app.use(
   }),
 );
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 app.use(pinoHttp({ logger }));
+app.use(authenticate); // populates req.user from JWT cookie/Bearer when present
 
 // Liveness probe (no DB dependency, so the process is healthy even before Postgres is up).
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

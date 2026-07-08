@@ -1,5 +1,8 @@
 // API response types — mirror node/src/services/*.ts mappers (docs/16-public-api-spec.md).
 
+export type Role = "visitor" | "business_owner" | "admin" | "super_admin";
+export interface SessionUser { id: string; email: string; fullName: string | null; role: Role }
+
 export type ScoreTier = "Unrated" | "Rated";
 export type Quadrant = "Leaders" | "Challengers" | "Rising_Stars" | "Niche_Players";
 export type ListingStatus = "unclaimed" | "claimed" | "verified";

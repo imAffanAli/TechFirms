@@ -6,9 +6,13 @@
  * NOTE: the CIS here is a simplified stand-in so the UI shows real numbers.
  * The real deterministic engine lands in M6 (docs/08-scoring-and-leaderboards.md).
  */
+import bcrypt from 'bcryptjs';
 import { PrismaClient, type ServiceCategory, type Quadrant } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+const ADMIN_EMAIL = 'admin@techfirms.local';
+const ADMIN_PASSWORD = 'admin12345';
 
 const SERVICES: { slug: string; name: string; category: ServiceCategory }[] = [
   { slug: 'ai-development', name: 'AI Development', category: 'ai_development' },
@@ -127,6 +131,14 @@ function computeScore(c: Demo) {
 }
 
 async function main() {
+  console.log('Seeding admin user…');
+  await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: { role: 'super_admin', passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10) },
+    create: { email: ADMIN_EMAIL, fullName: 'TechFirms Admin', role: 'super_admin', passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10) },
+  });
+  console.log(`  ✓ admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+
   console.log('Seeding services…');
   const serviceIdBySlug = new Map<string, string>();
   for (const s of SERVICES) {

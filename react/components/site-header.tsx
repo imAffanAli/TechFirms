@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AuthNav } from "@/components/auth-nav";
 
 const NAV = [
   { href: "/companies", label: "Companies" },
@@ -22,10 +23,8 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <Link href="/companies" className="hidden text-sm font-medium text-primary hover:underline sm:inline">
-            Find a partner
-          </Link>
+        <div className="ml-auto flex items-center gap-3">
+          <AuthNav />
           <ThemeToggle />
         </div>
       </div>

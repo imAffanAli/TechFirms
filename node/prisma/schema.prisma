@@ -83,6 +83,7 @@ model User {
   email          String           @unique
   fullName       String?
   role           Role             @default(visitor)
+  passwordHash   String? // local email/password auth (null for Supabase-provisioned users)
   supabaseId     String?          @unique // maps to Supabase Auth uid
   ownedCompanies Company[]        @relation("CompanyOwner")
   claims         Claim[]

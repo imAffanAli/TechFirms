@@ -12,7 +12,8 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     res.status(400).json({ error: { code: 'validation_error', message: 'Invalid request', details: err.issues } });
     return;
   }
+  const status = typeof (err as { status?: number }).status === 'number' ? (err as { status: number }).status : 500;
   const message = err instanceof Error ? err.message : 'Internal server error';
-  logger.error({ err }, 'Unhandled error');
-  res.status(500).json({ error: { code: 'internal_error', message } });
+  if (status >= 500) logger.error({ err }, 'Unhandled error');
+  res.status(status).json({ error: { code: status === 500 ? 'internal_error' : 'request_error', message } });
 }
