@@ -38,8 +38,14 @@ export function AuthNav() {
     );
   }
   const isAdmin = user.role === "admin" || user.role === "super_admin";
+  const isOwner = user.role === "business_owner";
   return (
     <div className="flex items-center gap-3 text-sm">
+      {isOwner && (
+        <Link href="/dashboard" className="font-medium text-primary hover:underline">
+          Dashboard
+        </Link>
+      )}
       {isAdmin && (
         <Link href="/admin" className="font-medium text-primary hover:underline">
           Admin

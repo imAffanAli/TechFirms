@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { QueryStatus } from '@prisma/client';
+import type { QueryStatus, ClaimStatus } from '@prisma/client';
 import { requireRole } from '../../middleware/auth.js';
 import { getAdminStats } from '../../services/adminService.js';
 import { listQueries, updateQuery } from '../../services/queryService.js';
+import { listClaims, decideClaim } from '../../services/claimService.js';
 import { writeAudit } from '../../utils/audit.js';
 
 export const adminRouter = Router();
@@ -42,6 +43,33 @@ adminRouter.patch('/queries/:id', async (req, res, next) => {
     const updated = await updateQuery(req.params.id, patch);
     await writeAudit({ actorId: req.user?.sub ?? null, action: 'query.update', entityType: 'Query', entityId: req.params.id, metadata: patch, ipAddress: req.ip ?? null });
     res.json(updated);
+  } catch (e) {
+    next(e);
+  }
+});
+
+const CLAIM_STATUSES = ['pending', 'approved', 'rejected'] as const;
+
+// GET /api/v1/admin/claims?status=pending
+adminRouter.get('/claims', async (req, res, next) => {
+  try {
+    const raw = String(req.query.status ?? '');
+    const status = (CLAIM_STATUSES as readonly string[]).includes(raw) ? (raw as ClaimStatus) : undefined;
+    res.json({ items: await listClaims(status) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const claimPatch = z.object({ decision: z.enum(['approved', 'rejected']) });
+
+// PATCH /api/v1/admin/claims/:id  { decision }
+adminRouter.patch('/claims/:id', async (req, res, next) => {
+  try {
+    const { decision } = claimPatch.parse(req.body);
+    const result = await decideClaim(req.params.id, decision, req.user!.sub);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: `claim.${decision}`, entityType: 'Claim', entityId: req.params.id, ipAddress: req.ip ?? null });
+    res.json(result);
   } catch (e) {
     next(e);
   }

@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 const LINKS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/queries", label: "Queries" },
+  { href: "/admin/claims", label: "Claims" },
 ];
-const SOON = ["Companies", "Claims", "Reviews"];
+const SOON = ["Companies", "Reviews"];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();
