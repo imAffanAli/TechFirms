@@ -33,7 +33,12 @@ export interface CompanyCard {
   cis: number | null;
   quadrant: Quadrant | null;
   tier: ScoreTier | null;
+  badges: string[];
   services: ServiceRef[];
+}
+
+export interface SponsoredCard extends CompanyCard {
+  sponsorshipId: string;
 }
 
 export interface CompaniesResponse {

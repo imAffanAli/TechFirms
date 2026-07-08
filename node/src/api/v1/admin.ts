@@ -6,6 +6,7 @@ import { getAdminStats } from '../../services/adminService.js';
 import { listQueries, updateQuery } from '../../services/queryService.js';
 import { listClaims, decideClaim } from '../../services/claimService.js';
 import { assessReview } from '../../services/moderationService.js';
+import { listSponsorships, createSponsorship, setSponsorshipActive } from '../../services/sponsorshipService.js';
 import { writeAudit } from '../../utils/audit.js';
 
 export const adminRouter = Router();
@@ -83,6 +84,50 @@ adminRouter.post('/moderate', async (req, res, next) => {
   try {
     const { text } = moderateBody.parse(req.body);
     res.json(await assessReview(text));
+  } catch (e) {
+    next(e);
+  }
+});
+
+const SERVICE_CATEGORIES = ['ai_development', 'custom_software', 'web_development', 'mobile_app_development', 'cloud', 'devops', 'data_engineering', 'cybersecurity', 'it_staff_augmentation', 'ui_ux_design'] as const;
+const sponsorshipBody = z.object({
+  companySlug: z.string(),
+  tier: z.enum(['featured', 'sponsored', 'verified_plus']),
+  countrySlug: z.string().optional(),
+  serviceCategory: z.enum(SERVICE_CATEGORIES).optional(),
+  slotRank: z.coerce.number().int().positive().optional(),
+  priceAmount: z.coerce.number().int().nonnegative().optional(),
+  priceCurrency: z.string().optional(),
+});
+
+// GET /api/v1/admin/sponsorships
+adminRouter.get('/sponsorships', async (_req, res, next) => {
+  try {
+    res.json({ items: await listSponsorships() });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// POST /api/v1/admin/sponsorships  — admin override for sales (docs/15)
+adminRouter.post('/sponsorships', async (req, res, next) => {
+  try {
+    const input = sponsorshipBody.parse(req.body);
+    const result = await createSponsorship(input);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: 'sponsorship.create', entityType: 'Sponsorship', entityId: result.id, metadata: input, ipAddress: req.ip ?? null });
+    res.status(201).json(result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// PATCH /api/v1/admin/sponsorships/:id  { active }
+adminRouter.patch('/sponsorships/:id', async (req, res, next) => {
+  try {
+    const { active } = z.object({ active: z.boolean() }).parse(req.body);
+    const result = await setSponsorshipActive(req.params.id, active);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: `sponsorship.${active ? 'activate' : 'deactivate'}`, entityType: 'Sponsorship', entityId: req.params.id, ipAddress: req.ip ?? null });
+    res.json(result);
   } catch (e) {
     next(e);
   }

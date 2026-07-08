@@ -8,6 +8,7 @@ import { queriesRouter } from './queries.js';
 import { claimsRouter } from './claims.js';
 import { dashboardRouter } from './dashboard.js';
 import { reviewsRouter } from './reviews.js';
+import { sponsorshipsRouter } from './sponsorships.js';
 
 /**
  * API surface (v1). Public read endpoints per docs/16; auth + admin per docs/12.
@@ -24,6 +25,7 @@ v1Router.use('/queries', queriesRouter); // POST public lead-gen submissions
 v1Router.use('/claims', claimsRouter); // auth: request/list company claims
 v1Router.use('/dashboard', dashboardRouter); // business_owner: manage owned companies
 v1Router.use('/reviews', reviewsRouter); // public: invited review submission
+v1Router.use('/sponsorships', sponsorshipsRouter); // public: active slots + click tracking
 v1Router.use('/companies', companiesRouter); // GET /companies, GET /companies/:slug
 v1Router.use('/leaderboard', leaderboardRouter); // GET /leaderboard/:country[/:service]
 v1Router.use('/services', servicesRouter); // GET /services

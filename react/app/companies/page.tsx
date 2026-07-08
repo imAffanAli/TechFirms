@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCompanies, getServices, getCountries } from "@/lib/data";
+import { getCompanies, getServices, getCountries, getSponsored } from "@/lib/data";
 import { CompanyCard } from "@/components/company-card";
 import { DirectoryFilters } from "@/components/directory-filters";
+import { SponsoredStrip } from "@/components/sponsored-strip";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,11 @@ type SP = Promise<{ q?: string; service?: string; country?: string; sort?: strin
 
 export default async function CompaniesPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
-  const [data, services, countries] = await Promise.all([
+  const [data, services, countries, sponsored] = await Promise.all([
     getCompanies({ q: sp.q, service: sp.service, country: sp.country, sort: sp.sort, page: sp.page }),
     getServices(),
     getCountries(),
+    getSponsored(sp.country, sp.service),
   ]);
 
   const buildQuery = (page: number) => {
@@ -37,6 +39,8 @@ export default async function CompaniesPage({ searchParams }: { searchParams: SP
       <div className="mt-6">
         <DirectoryFilters services={services} countries={countries} current={sp} />
       </div>
+
+      {(!sp.page || sp.page === "1") && <SponsoredStrip items={sponsored} />}
 
       {!data ? (
         <p className="mt-10 rounded-lg border border-border bg-card p-6 text-muted-foreground">

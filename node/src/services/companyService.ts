@@ -17,7 +17,10 @@ const companyListInclude = {
   services: { include: { service: true }, orderBy: { focusPct: 'desc' as const } },
   intelligenceScore: true,
   reviews: { where: { deletedAt: null }, select: { ratingOverall: true } },
+  sponsorships: { where: { active: true }, select: { tier: true } },
 } satisfies Prisma.CompanyInclude;
+
+const tierBadge = (tier: string): string | null => (tier === 'featured' ? 'Featured' : tier === 'verified_plus' ? 'Verified-Plus' : null);
 
 function mapCard(c: Prisma.CompanyGetPayload<{ include: typeof companyListInclude }>) {
   const { rating, reviewCount } = ratingFromReviews(c.reviews);
@@ -44,8 +47,17 @@ function mapCard(c: Prisma.CompanyGetPayload<{ include: typeof companyListInclud
     cis: c.intelligenceScore?.cis ?? null,
     quadrant: c.intelligenceScore?.quadrant ?? null,
     tier: c.intelligenceScore?.tier ?? null,
+    badges: [...new Set(c.sponsorships.map((s) => tierBadge(s.tier)).filter((b): b is string => !!b))],
     services: c.services.map((s) => ({ slug: s.service.slug, name: s.service.name, focusPct: s.focusPct })),
   };
+}
+
+/** Company cards for a set of ids, preserving the input order (used for sponsored slots). */
+export async function getCardsByIds(ids: string[]): Promise<CompanyCard[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.company.findMany({ where: { id: { in: ids }, deletedAt: null }, include: companyListInclude });
+  const byId = new Map(rows.map((r) => [r.id, mapCard(r)]));
+  return ids.map((id) => byId.get(id)).filter((c): c is CompanyCard => !!c);
 }
 
 export type CompanyCard = ReturnType<typeof mapCard>;

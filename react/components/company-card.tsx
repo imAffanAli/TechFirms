@@ -23,6 +23,9 @@ export function CompanyCard({ c }: { c: Card }) {
               {c.name}
             </Link>
             {c.verified && <Badge variant="verified">Verified</Badge>}
+            {c.badges.map((b) => (
+              <Badge key={b} variant={b === "Verified-Plus" ? "brand" : "sponsored"}>{b}</Badge>
+            ))}
           </div>
           {c.tagline && <p className="mt-0.5 truncate text-sm text-muted-foreground">{c.tagline}</p>}
         </div>

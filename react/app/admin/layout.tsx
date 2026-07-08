@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/queries", label: "Queries" },
   { href: "/admin/claims", label: "Claims" },
   { href: "/admin/moderate", label: "Moderation" },
+  { href: "/admin/sponsorships", label: "Sponsorships" },
 ];
 const SOON = ["Companies"];
 

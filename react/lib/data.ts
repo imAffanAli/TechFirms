@@ -5,6 +5,7 @@ import type {
   CountryItem,
   Leaderboard,
   ServiceItem,
+  SponsoredCard,
 } from "./types";
 
 /** Fetch JSON from the backend; returns null on failure (logged server-side) so pages can render a fallback. */
@@ -34,6 +35,14 @@ export async function getServices() {
 
 export async function getCountries() {
   return (await getJSON<{ items: CountryItem[] }>(`/api/v1/countries`))?.items ?? [];
+}
+
+export async function getSponsored(country?: string, service?: string): Promise<SponsoredCard[]> {
+  const qs = new URLSearchParams();
+  if (country) qs.set("country", country);
+  if (service) qs.set("service", service);
+  const r = await getJSON<{ items: SponsoredCard[] }>(`/api/v1/sponsorships/active${qs.toString() ? `?${qs}` : ""}`);
+  return r?.items ?? [];
 }
 
 export function getLeaderboard(country: string, service?: string) {
