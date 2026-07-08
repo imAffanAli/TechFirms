@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js';
+import { isAiEnabled } from './ai.js';
 
 /** Admin dashboard KPIs (docs/12). */
 export async function getAdminStats() {
@@ -24,5 +25,6 @@ export async function getAdminStats() {
     pendingClaims,
     queries,
     flaggedReviews,
+    aiEnabled: isAiEnabled(),
   };
 }

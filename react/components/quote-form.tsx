@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ServiceItem, CountryItem } from "@/lib/types";
 
-type Matched = { slug: string; name: string; rank: number; cis: number | null };
+type Matched = { slug: string; name: string; rank: number; cis: number | null; reason?: string };
 const field = "mt-1 h-10 w-full rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function QuoteForm({
@@ -72,6 +72,7 @@ export function QuoteForm({
                 <li key={m.slug}>
                   #{m.rank} <Link href={`/companies/${m.slug}`} className="text-primary hover:underline">{m.name}</Link>
                   {m.cis != null && <span className="text-muted-foreground"> · CIS {m.cis}</span>}
+                  {m.reason && <span className="block text-xs text-muted-foreground">{m.reason}</span>}
                 </li>
               ))}
             </ul>

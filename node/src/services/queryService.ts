@@ -1,5 +1,6 @@
 import type { Prisma, QueryStatus } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { isAiEnabled, explainMatches } from './ai.js';
 
 export interface CreateQueryInput {
   projectType: string;
@@ -48,7 +49,7 @@ export async function createQuery(input: CreateQueryInput) {
     },
   });
 
-  let matches: { slug: string; name: string; rank: number; cis: number | null }[] = [];
+  let matches: { slug: string; name: string; rank: number; cis: number | null; reason?: string }[] = [];
   if (!directCompanyId) {
     const where: Prisma.CompanyWhereInput = {
       deletedAt: null,
@@ -58,13 +59,18 @@ export async function createQuery(input: CreateQueryInput) {
     };
     const firms = await prisma.company.findMany({
       where,
-      include: { intelligenceScore: { select: { cis: true } } },
+      include: { intelligenceScore: { select: { cis: true } }, services: { include: { service: { select: { slug: true } } }, orderBy: { focusPct: 'desc' }, take: 3 } },
       orderBy: { intelligenceScore: { cis: 'desc' } },
       take: 5,
     });
     matches = firms.map((f, i) => ({ slug: f.slug, name: f.name, rank: i + 1, cis: f.intelligenceScore?.cis ?? null }));
     for (let i = 0; i < firms.length; i++) {
       await prisma.queryMatch.create({ data: { queryId: query.id, companyId: firms[i]!.id, rank: i + 1 } });
+    }
+    // Feature 3: AI match rationale (only when a key is configured — otherwise CIS order stands).
+    if (matches.length > 0 && isAiEnabled()) {
+      const reasons = await explainMatches(input.description, firms.map((f) => ({ name: f.name, services: f.services.map((s) => s.service.slug), cis: f.intelligenceScore?.cis ?? 0 })));
+      if (reasons) matches = matches.map((m) => ({ ...m, reason: reasons[m.name] }));
     }
   }
 

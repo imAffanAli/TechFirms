@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import type { Prisma, Quadrant } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
-import { env } from '../config/env.js';
 import { createLogger } from '../utils/logger.js';
 import { toCurrency } from './fx.js';
+import { generateDescription } from './ai.js';
 import type { RawEmployeeReview } from './content.js';
 
 const logger = createLogger('pipeline');
@@ -51,28 +51,13 @@ export async function domainAgeYears(domain: string): Promise<number | undefined
   }
 }
 
-// ─────────────────── AI description (Claude, with fallback) ───────────────────
+// ─────────────────── AI description (Claude via services/ai.ts, with fallback) ───────────────────
 /** Neutral ~60-word profile. Uses Claude (Haiku) when ANTHROPIC_API_KEY is set, else a deterministic template. */
 export async function describeCompany(raw: RawCompany, countryName: string, cityName: string): Promise<string> {
   const svc = raw.services.map((s) => s.slug.replace(/-/g, ' ')).join(', ');
   const fallback = `${raw.name} is a technology company headquartered in ${cityName}, ${countryName}, focused on ${svc}. Founded in ${raw.foundedYear}, it serves clients with a team of ${raw.employeeRange[0]}–${raw.employeeRange[1]} and hourly rates from $${raw.hourlyRate[0]} to $${raw.hourlyRate[1]}.`;
-  if (!env.ANTHROPIC_API_KEY) return fallback;
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 160,
-        messages: [{ role: 'user', content: `Write a neutral, factual 60-word company profile (no marketing superlatives) for "${raw.name}", a ${svc} company in ${cityName}, ${countryName}, founded ${raw.foundedYear}, team ${raw.employeeRange[0]}-${raw.employeeRange[1]}. Return only the paragraph.` }],
-      }),
-    });
-    if (!res.ok) return fallback;
-    const data = (await res.json()) as { content?: { type: string; text: string }[] };
-    return data.content?.find((c) => c.type === 'text')?.text?.trim() || fallback;
-  } catch {
-    return fallback;
-  }
+  const ai = await generateDescription({ name: raw.name, services: raw.services.map((s) => s.slug.replace(/-/g, ' ')), city: cityName, country: countryName, foundedYear: raw.foundedYear, empRange: raw.employeeRange });
+  return ai ?? fallback;
 }
 
 // ─────────────────── Demo scoring (shared shape with docs/08) ───────────────────

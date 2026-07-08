@@ -13,6 +13,7 @@ interface Stats {
   pendingClaims: number;
   queries: number;
   flaggedReviews: number;
+  aiEnabled: boolean;
 }
 
 export default async function AdminDashboard() {
@@ -38,7 +39,15 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Admin dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold tracking-tight">Admin dashboard</h1>
+        {stats && (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${stats.aiEnabled ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300" : "bg-muted text-muted-foreground"}`}>
+            <span className={`size-2 rounded-full ${stats.aiEnabled ? "bg-success" : "bg-muted-foreground"}`} />
+            AI features {stats.aiEnabled ? "enabled" : "off (set ANTHROPIC_API_KEY)"}
+          </span>
+        )}
+      </div>
       <p className="mt-1 text-muted-foreground">Platform health at a glance.</p>
 
       {!stats ? (

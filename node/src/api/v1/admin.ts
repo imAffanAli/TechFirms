@@ -5,6 +5,7 @@ import { requireRole } from '../../middleware/auth.js';
 import { getAdminStats } from '../../services/adminService.js';
 import { listQueries, updateQuery } from '../../services/queryService.js';
 import { listClaims, decideClaim } from '../../services/claimService.js';
+import { assessReview } from '../../services/moderationService.js';
 import { writeAudit } from '../../utils/audit.js';
 
 export const adminRouter = Router();
@@ -70,6 +71,18 @@ adminRouter.patch('/claims/:id', async (req, res, next) => {
     const result = await decideClaim(req.params.id, decision, req.user!.sub);
     await writeAudit({ actorId: req.user?.sub ?? null, action: `claim.${decision}`, entityType: 'Claim', entityId: req.params.id, ipAddress: req.ip ?? null });
     res.json(result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+const moderateBody = z.object({ text: z.string().min(1).max(5000) });
+
+// POST /api/v1/admin/moderate  — AI (or heuristic) sentiment + fake/spam assessment (docs/11)
+adminRouter.post('/moderate', async (req, res, next) => {
+  try {
+    const { text } = moderateBody.parse(req.body);
+    res.json(await assessReview(text));
   } catch (e) {
     next(e);
   }
