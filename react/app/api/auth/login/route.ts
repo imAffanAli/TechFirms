@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import { apiBase } from "@/lib/api-base";
 
-const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const MAX_AGE = 7 * 24 * 60 * 60;
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
-  const res = await fetch(`${API}/api/v1/auth/login`, {
+  const res = await fetch(`${apiBase()}/api/v1/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),

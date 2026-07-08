@@ -1,0 +1,58 @@
+# Render Blueprint — deploys the whole app (Postgres + backend + frontend) in one click.
+# In Render: New → Blueprint → pick this repo → Apply. See DEPLOY.md for the click-by-click.
+databases:
+  - name: techfirms-db
+    plan: free
+    databaseName: techfirms
+    user: techfirms
+
+services:
+  # ── Backend API (Express + Prisma). Build also migrates + seeds + imports + demo data. ──
+  - type: web
+    name: techfirms-api
+    runtime: node
+    plan: free
+    rootDir: node
+    autoDeploy: true
+    healthCheckPath: /health
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build && npm run deploy:bootstrap
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: techfirms-db
+          property: connectionString
+      - key: DIRECT_URL
+        fromDatabase:
+          name: techfirms-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: techfirms-web
+          property: host
+      # Optional: paste a Claude key in the Render dashboard to enable AI features.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  # ── Frontend (Next.js). Talks to the backend server-side via API_URL. ──
+  - type: web
+    name: techfirms-web
+    runtime: node
+    plan: free
+    rootDir: react
+    autoDeploy: true
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_URL
+        fromService:
+          type: web
+          name: techfirms-api
+          property: host
