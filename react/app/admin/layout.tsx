@@ -4,8 +4,12 @@ import { getSession, isAdmin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-// Future sections (M4–M5); shown disabled in the skeleton.
-const SOON = ["Companies", "Queries", "Claims", "Reviews"];
+// Live + future admin sections.
+const LINKS = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/queries", label: "Queries" },
+];
+const SOON = ["Companies", "Claims", "Reviews"];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();
@@ -16,7 +20,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="w-44 shrink-0">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin</div>
         <nav className="mt-3 space-y-1 text-sm">
-          <Link href="/admin" className="block rounded-md px-3 py-1.5 font-medium hover:bg-muted">Dashboard</Link>
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="block rounded-md px-3 py-1.5 font-medium hover:bg-muted">{l.label}</Link>
+          ))}
           {SOON.map((label) => (
             <span key={label} className="flex items-center justify-between rounded-md px-3 py-1.5 text-muted-foreground/60">
               {label} <span className="text-[10px] uppercase">soon</span>

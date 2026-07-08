@@ -9,6 +9,7 @@ import { LogoAvatar } from "@/components/logo-avatar";
 import { ScoreBadge } from "@/components/score-badge";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
+import { QuoteForm } from "@/components/quote-form";
 
 export const dynamic = "force-dynamic";
 
@@ -287,6 +288,15 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
               <p className="mt-3 text-muted-foreground">Not yet rated.</p>
             )}
           </section>
+
+          {/* Get a quote */}
+          <section id="quote" className="scroll-mt-20">
+            <h2 className="text-xl font-semibold">Get a quote from {c.name}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Send your project brief directly to {c.name}. It also reaches the TechFirms team.</p>
+            <div className="mt-4 max-w-xl">
+              <QuoteForm mode="direct" companySlug={c.slug} companyName={c.name} />
+            </div>
+          </section>
         </div>
 
         {/* Sidebar */}
@@ -303,9 +313,6 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
             {c.listingStatus === "unclaimed" && (
               <Link href={`/claim/${c.slug}`} className="mt-3 block text-xs text-primary hover:underline">Claim this profile</Link>
             )}
-          </div>
-          <div id="quote" className="scroll-mt-20 rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
-            The quote / lead-gen form ships in milestone M4 (see docs/14). It will send your project brief to {c.name} and the TechFirms team.
           </div>
         </aside>
       </div>

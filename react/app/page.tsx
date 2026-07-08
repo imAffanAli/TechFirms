@@ -42,6 +42,10 @@ export default function Home() {
           </button>
         </form>
 
+        <p className="mt-3 text-sm text-muted-foreground">
+          Not sure where to start? <Link href="/get-quote" className="font-medium text-primary hover:underline">Tell us your project and get matched →</Link>
+        </p>
+
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
           <span className="text-muted-foreground">Featured:</span>
           {FEATURED.map((f) => (
