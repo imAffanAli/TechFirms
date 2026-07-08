@@ -15,7 +15,7 @@ services:
     rootDir: node
     autoDeploy: true
     healthCheckPath: /health
-    buildCommand: npm install --include=dev && npx prisma generate && npm run build && npm run deploy:bootstrap
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
