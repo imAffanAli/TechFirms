@@ -10,6 +10,7 @@ import { ScoreBadge } from "@/components/score-badge";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { QuoteForm } from "@/components/quote-form";
+import { EmployeeReviewForm, ClientReviewForm } from "@/components/review-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -174,6 +175,15 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
         </div>
       )}
 
+      {/* TechFirms Take — our own original assessment, generated from signals (never copied) */}
+      {c.editorialSummary && (
+        <section className="mt-4 rounded-xl border border-violet-600/30 bg-violet-600/5 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">TechFirms Take</h2>
+          <p className="mt-2 text-sm leading-relaxed">{c.editorialSummary}</p>
+          <p className="mt-2 text-xs text-muted-foreground">Our own assessment, generated from ratings, sentiment, and trust signals — not copied from any source.</p>
+        </section>
+      )}
+
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_300px]">
         {/* Main content */}
         <div className="min-w-0 space-y-10">
@@ -229,6 +239,7 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
                 </div>
               ))}
             </div>
+            <div className="mt-5"><ClientReviewForm slug={c.slug} companyName={c.name} /></div>
           </section>
 
           {/* Employee sentiment */}
@@ -263,7 +274,7 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
                   {c.employeeReviews.map((er) => (
                     <div key={er.id} className="rounded-lg border border-border bg-card p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="font-medium">“{er.title}”</div>
+                        <div className="flex flex-wrap items-center gap-2 font-medium">“{er.title}” {er.verified && <Badge variant="verified"><ShieldCheck size={11} /> Verified employee</Badge>}</div>
                         <StarRating value={er.rating} size={13} />
                       </div>
                       <div className="text-xs text-muted-foreground">{[er.role, er.isCurrentEmployee ? "Current employee" : "Former employee"].filter(Boolean).join(" · ")}</div>
@@ -274,9 +285,14 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Sample employee reviews shown for the demo. In production these are native anonymous reviews (v2); external aggregates always link out to the source.</p>
+                <p className="mt-2 text-xs text-muted-foreground">Anonymous reviews submitted on TechFirms. A &quot;Verified employee&quot; badge means the reviewer&apos;s work email matched the company domain.</p>
               </div>
             )}
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Worked here?</h3>
+              <p className="mt-1 mb-3 text-sm text-muted-foreground">Share an anonymous review of what it&apos;s like to work at {c.name}.</p>
+              <EmployeeReviewForm slug={c.slug} companyName={c.name} />
+            </div>
           </section>
 
           {/* Trust signals */}

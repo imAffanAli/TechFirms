@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { aggregateExternalRatings } from './ratingsService.js';
+import { buildEditorialSummary } from './editorialSummary.js';
 
 // ── helpers ──────────────────────────────────────────────
 const dec = (v: Prisma.Decimal | null | undefined): number | null => (v == null ? null : Number(v));
@@ -121,10 +122,10 @@ export async function getCompanyBySlug(slug: string) {
       hqCity: true,
       services: { include: { service: true }, orderBy: { focusPct: 'desc' } },
       intelligenceScore: true,
-      // all reviews (accurate count/avg); best + richest ordered first, sliced for display
-      reviews: { where: { deletedAt: null }, orderBy: [{ ratingOverall: 'desc' }, { reviewedAt: 'desc' }] },
+      // published reviews only (held/spam excluded); best + richest ordered first, sliced for display
+      reviews: { where: { deletedAt: null, flagged: false }, orderBy: [{ ratingOverall: 'desc' }, { reviewedAt: 'desc' }] },
       employeeSentiment: { orderBy: { asOf: 'desc' }, take: 1 },
-      employeeReviews: { orderBy: { rating: 'desc' }, take: 5 },
+      employeeReviews: { where: { flagged: false, deletedAt: null }, orderBy: { rating: 'desc' }, take: 8 },
       trustSignals: { orderBy: { asOf: 'desc' }, take: 1 },
       offices: { include: { country: true, city: true } },
       externalRatings: { orderBy: { source: 'asc' } },
@@ -135,6 +136,24 @@ export async function getCompanyBySlug(slug: string) {
   const { rating, reviewCount } = ratingFromReviews(c.reviews);
   const es = c.employeeSentiment[0] ?? null;
   const ts = c.trustSignals[0] ?? null;
+  const agg = aggregateExternalRatings(c.externalRatings);
+  const editorialSummary = buildEditorialSummary({
+    name: c.name,
+    city: c.hqCity?.name ?? null,
+    country: c.hqCountry?.name ?? null,
+    foundedYear: c.foundedYear,
+    employeeMin: c.employeeRangeMin,
+    employeeMax: c.employeeRangeMax,
+    topServices: c.services.map((s) => s.service.name),
+    cis: c.intelligenceScore?.cis ?? null,
+    quadrant: c.intelligenceScore?.quadrant ?? null,
+    clientRating: rating,
+    reviewCount,
+    externalAverage: agg?.average ?? null,
+    externalCount: agg?.totalCount ?? 0,
+    employeeSentiment: es ? dec(es.overallRating) : null,
+    certifications: (ts?.certifications as string[] | null) ?? [],
+  });
 
   return {
     slug: c.slug,
@@ -195,6 +214,7 @@ export async function getCompanyBySlug(slug: string) {
       cons: er.cons,
       role: er.role,
       isCurrentEmployee: er.isCurrentEmployee,
+      verified: er.verified,
       reviewedAt: er.reviewedAt,
     })),
     employeeSentiment: es
@@ -234,7 +254,8 @@ export async function getCompanyBySlug(slug: string) {
       sourceUrl: r.sourceUrl,
       fetchedAt: r.fetchedAt,
     })),
-    aggregateRating: aggregateExternalRatings(c.externalRatings),
+    aggregateRating: agg,
+    editorialSummary,
   };
 }
 

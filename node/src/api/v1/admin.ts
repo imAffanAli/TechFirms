@@ -6,6 +6,7 @@ import { getAdminStats } from '../../services/adminService.js';
 import { listQueries, updateQuery } from '../../services/queryService.js';
 import { listClaims, decideClaim } from '../../services/claimService.js';
 import { assessReview } from '../../services/moderationService.js';
+import { listHeldReviews, moderateReview } from '../../services/communityReviewService.js';
 import { listSponsorships, createSponsorship, setSponsorshipActive } from '../../services/sponsorshipService.js';
 import { writeAudit } from '../../utils/audit.js';
 
@@ -84,6 +85,29 @@ adminRouter.post('/moderate', async (req, res, next) => {
   try {
     const { text } = moderateBody.parse(req.body);
     res.json(await assessReview(text));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// GET /api/v1/admin/reviews/held  — first-party reviews held by auto-moderation
+adminRouter.get('/reviews/held', async (_req, res, next) => {
+  try {
+    res.json(await listHeldReviews());
+  } catch (e) {
+    next(e);
+  }
+});
+
+const moderateReviewBody = z.object({ kind: z.enum(['client', 'employee']), decision: z.enum(['approve', 'reject']) });
+
+// PATCH /api/v1/admin/reviews/:id  { kind, decision }
+adminRouter.patch('/reviews/:id', async (req, res, next) => {
+  try {
+    const { kind, decision } = moderateReviewBody.parse(req.body);
+    const result = await moderateReview(kind, req.params.id, decision);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: `review.${decision}`, entityType: 'Review', entityId: req.params.id, metadata: { kind }, ipAddress: req.ip ?? null });
+    res.json(result);
   } catch (e) {
     next(e);
   }

@@ -308,11 +308,14 @@ model EmployeeReview {
   cons              String   @db.Text
   role              String? // job title
   isCurrentEmployee Boolean  @default(true)
-  source            String   @default("sample") // "sample" (demo) | "native" (v2 first-party)
+  source            String    @default("sample") // "sample" (demo) | "native" (first-party)
   sourceUrl         String?
-  reviewedAt        DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  verified          Boolean   @default(false) // work-email domain matched the company
+  flagged           Boolean   @default(false) // held by moderation (spam/abuse)
+  reviewedAt        DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
 
   @@index([companyId, rating])
 }

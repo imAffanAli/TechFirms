@@ -73,6 +73,7 @@ export interface EmployeeReview {
   cons: string;
   role: string | null;
   isCurrentEmployee: boolean;
+  verified: boolean;
   reviewedAt: string;
 }
 
@@ -156,6 +157,7 @@ export interface CompanyDetail {
   offices: { country: PlaceRef | null; city: PlaceRef | null; isHeadquarters: boolean }[];
   externalRatings: ExternalRating[];
   aggregateRating: AggregateRating | null;
+  editorialSummary: string;
 }
 
 export interface ServiceItem { slug: string; name: string; category: string; companyCount: number }
