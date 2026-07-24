@@ -114,6 +114,13 @@ export interface AggregateRating {
   sourceCount: number;
 }
 
+export interface Editorial {
+  verdict: string;
+  strengths: string[];
+  considerations: string[];
+  bestFor: string | null;
+}
+
 export interface IntelligenceScore {
   cis: number;
   reviewsScore: number;
@@ -157,7 +164,7 @@ export interface CompanyDetail {
   offices: { country: PlaceRef | null; city: PlaceRef | null; isHeadquarters: boolean }[];
   externalRatings: ExternalRating[];
   aggregateRating: AggregateRating | null;
-  editorialSummary: string;
+  editorial: Editorial;
 }
 
 export interface ServiceItem { slug: string; name: string; category: string; companyCount: number }

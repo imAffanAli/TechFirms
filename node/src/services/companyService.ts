@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { aggregateExternalRatings } from './ratingsService.js';
-import { buildEditorialSummary } from './editorialSummary.js';
+import { buildEditorial } from './editorialSummary.js';
 
 // ── helpers ──────────────────────────────────────────────
 const dec = (v: Prisma.Decimal | null | undefined): number | null => (v == null ? null : Number(v));
@@ -137,7 +137,8 @@ export async function getCompanyBySlug(slug: string) {
   const es = c.employeeSentiment[0] ?? null;
   const ts = c.trustSignals[0] ?? null;
   const agg = aggregateExternalRatings(c.externalRatings);
-  const editorialSummary = buildEditorialSummary({
+  const sc = c.intelligenceScore;
+  const editorial = buildEditorial({
     name: c.name,
     city: c.hqCity?.name ?? null,
     country: c.hqCountry?.name ?? null,
@@ -145,14 +146,22 @@ export async function getCompanyBySlug(slug: string) {
     employeeMin: c.employeeRangeMin,
     employeeMax: c.employeeRangeMax,
     topServices: c.services.map((s) => s.service.name),
-    cis: c.intelligenceScore?.cis ?? null,
-    quadrant: c.intelligenceScore?.quadrant ?? null,
+    cis: sc?.cis ?? null,
+    quadrant: sc?.quadrant ?? null,
+    tier: sc?.tier ?? null,
+    reviewsScore: sc?.reviewsScore ?? null,
+    sentimentScore: sc?.sentimentScore ?? null,
+    trustScore: sc?.trustScore ?? null,
+    marketScore: sc?.marketScore ?? null,
     clientRating: rating,
     reviewCount,
     externalAverage: agg?.average ?? null,
     externalCount: agg?.totalCount ?? 0,
     employeeSentiment: es ? dec(es.overallRating) : null,
     certifications: (ts?.certifications as string[] | null) ?? [],
+    fundingRaised: ts?.fundingRaised ?? null,
+    domainAgeYears: ts ? dec(ts.domainAgeYears) : null,
+    minProject: c.minProjectSize,
   });
 
   return {
@@ -255,7 +264,7 @@ export async function getCompanyBySlug(slug: string) {
       fetchedAt: r.fetchedAt,
     })),
     aggregateRating: agg,
-    editorialSummary,
+    editorial,
   };
 }
 

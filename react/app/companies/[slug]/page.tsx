@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Globe, MapPin, Users, Calendar, ShieldCheck, Award, Code2 } from "lucide-react";
+import { Globe, MapPin, Users, Calendar, ShieldCheck, Award, Code2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { getCompany } from "@/lib/data";
 import type { CompanyDetail } from "@/lib/types";
 import { fmtRate, fmtMoney, fmtEmployees, quadrantLabel } from "@/lib/format";
@@ -176,11 +176,44 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
       )}
 
       {/* TechFirms Take — our own original assessment, generated from signals (never copied) */}
-      {c.editorialSummary && (
+      {c.editorial && (
         <section className="mt-4 rounded-xl border border-violet-600/30 bg-violet-600/5 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">TechFirms Take</h2>
-          <p className="mt-2 text-sm leading-relaxed">{c.editorialSummary}</p>
-          <p className="mt-2 text-xs text-muted-foreground">Our own assessment, generated from ratings, sentiment, and trust signals — not copied from any source.</p>
+          <p className="mt-2 text-sm leading-relaxed">{c.editorial.verdict}</p>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {c.editorial.strengths.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-success">Strengths</h3>
+                <ul className="mt-2 space-y-1.5">
+                  {c.editorial.strengths.map((s) => (
+                    <li key={s} className="flex gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-success" /> <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {c.editorial.considerations.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">Considerations</h3>
+                <ul className="mt-2 space-y-1.5">
+                  {c.editorial.considerations.map((s) => (
+                    <li key={s} className="flex gap-2 text-sm text-muted-foreground">
+                      <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-500" /> <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {c.editorial.bestFor && (
+            <p className="mt-4 rounded-lg bg-violet-600/10 px-3 py-2 text-sm">
+              <span className="font-medium">Best fit:</span> {c.editorial.bestFor.replace(/^Best suited for /, "")}
+            </p>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">Our own assessment, generated from ratings, sentiment, and trust signals — not copied from any source.</p>
         </section>
       )}
 

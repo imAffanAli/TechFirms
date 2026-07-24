@@ -1,9 +1,16 @@
 /**
- * "TechFirms Take" — an ORIGINAL editorial paragraph we write ourselves from the signals
- * we hold (ratings, sentiment, trust, size, services). It is our own content — never copied
- * from any source. Deterministic + template-based so it needs no AI key; when ANTHROPIC_API_KEY
- * is present the profile description is already AI-narrated elsewhere.
+ * "TechFirms Take" — an ORIGINAL, detailed editorial section we write ourselves from the
+ * signals we hold (ratings, sentiment, trust, size, services, score breakdown). It is our
+ * own content — never copied from any source. Deterministic + template-based, so it needs
+ * no AI key.
  */
+
+export interface Editorial {
+  verdict: string; // 2–4 sentence overview
+  strengths: string[]; // derived positives
+  considerations: string[]; // derived caveats / things to check
+  bestFor: string | null; // who it suits
+}
 
 export interface EditorialInput {
   name: string;
@@ -15,12 +22,20 @@ export interface EditorialInput {
   topServices: string[];
   cis: number | null;
   quadrant: string | null;
+  tier: string | null;
+  reviewsScore: number | null; // 0..100
+  sentimentScore: number | null;
+  trustScore: number | null;
+  marketScore: number | null;
   clientRating: number | null; // internal review avg, 0..5
   reviewCount: number;
   externalAverage: number | null; // aggregate public rating, 0..5
-  externalCount: number; // total public ratings
+  externalCount: number;
   employeeSentiment: number | null; // 0..5
   certifications: string[];
+  fundingRaised: number | null; // whole units, USD
+  domainAgeYears: number | null;
+  minProject: number | null;
 }
 
 function sizeDescriptor(min: number | null, max: number | null): string | null {
@@ -47,23 +62,26 @@ function quadrantVerdict(q: string | null): string | null {
   }
 }
 
-export function buildEditorialSummary(x: EditorialInput): string {
-  const sentences: string[] = [];
+function compactMoney(n: number): string {
+  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(n % 1_000_000_000 ? 1 : 0)}B`;
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
+  if (n >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${n}`;
+}
 
-  // 1) Identity
+function buildVerdict(x: EditorialInput): string {
+  const sentences: string[] = [];
   const size = sizeDescriptor(x.employeeMin, x.employeeMax);
   const loc = [x.city, x.country].filter(Boolean).join(', ');
   const services =
-    x.topServices.length >= 2
-      ? `${x.topServices.slice(0, 2).join(' and ')}`
-      : x.topServices[0] ?? 'technology services';
+    x.topServices.length >= 2 ? `${x.topServices.slice(0, 2).join(' and ')}` : x.topServices[0] ?? 'technology services';
+
   let s1 = `${x.name} is ${size ?? 'a'} technology company`;
   if (loc) s1 += ` based in ${loc}`;
   if (x.foundedYear) s1 += `, operating since ${x.foundedYear}`;
   s1 += `, focused on ${services}.`;
   sentences.push(s1);
 
-  // 2) Reputation — prefer the real public (Google) rating, fall back to on-platform reviews
   if (x.externalAverage != null) {
     let s2 = `It holds a public rating of ${x.externalAverage.toFixed(1)}★`;
     if (x.externalCount > 0) s2 += ` across ${x.externalCount.toLocaleString()} ratings`;
@@ -74,23 +92,61 @@ export function buildEditorialSummary(x: EditorialInput): string {
     sentences.push(`Clients rate it ${x.clientRating.toFixed(1)}★ across ${x.reviewCount} review${x.reviewCount === 1 ? '' : 's'} on TechFirms.`);
   }
 
-  // 3) Employer signal + trust
-  const bits: string[] = [];
-  if (x.employeeSentiment != null) bits.push(`employees rate it ${x.employeeSentiment.toFixed(1)}/5`);
-  if (x.certifications.length > 0) bits.push(`it holds ${x.certifications.slice(0, 3).join(', ')}`);
-  if (bits.length) {
-    const joined = bits.join(', and ');
-    sentences.push(`${joined.charAt(0).toUpperCase()}${joined.slice(1)}.`);
-  }
-
-  // 4) Verdict
   const verdict = quadrantVerdict(x.quadrant);
   if (x.cis != null) {
-    let s4 = `Its TechFirms Intelligence Score is ${x.cis}/100`;
-    if (verdict) s4 += `, ${verdict}`;
-    s4 += '.';
-    sentences.push(s4);
+    let s3 = `Its TechFirms Intelligence Score is ${x.cis}/100`;
+    if (verdict) s3 += `, ${verdict}`;
+    s3 += '.';
+    sentences.push(s3);
   }
-
   return sentences.join(' ');
+}
+
+function buildStrengths(x: EditorialInput): string[] {
+  const out: string[] = [];
+  if (x.cis != null && x.cis >= 80) out.push(`Elite Company Intelligence Score (${x.cis}/100)`);
+  if (x.externalAverage != null && x.externalAverage >= 4.4) out.push(`Strong public reputation — ${x.externalAverage.toFixed(1)}★${x.externalCount > 0 ? ` from ${x.externalCount.toLocaleString()} ratings` : ''}`);
+  if (x.employeeSentiment != null && x.employeeSentiment >= 4.2) out.push(`Employees rate it highly (${x.employeeSentiment.toFixed(1)}/5)`);
+  if (x.reviewsScore != null && x.reviewsScore >= 75) out.push('Excellent client-review track record');
+  if (x.certifications.length > 0) out.push(`Certified: ${x.certifications.slice(0, 3).join(', ')}`);
+  if (x.fundingRaised != null && x.fundingRaised > 0) out.push(`Venture-backed (${compactMoney(x.fundingRaised)} raised)`);
+  if ((x.employeeMax ?? x.employeeMin ?? 0) >= 1000) out.push('Enterprise-scale delivery team');
+  if (x.marketScore != null && x.marketScore >= 75) out.push('High market presence');
+  if (x.domainAgeYears != null && x.domainAgeYears >= 10) out.push(`Long-established (${Math.round(x.domainAgeYears)}+ year web presence)`);
+  return out.slice(0, 5);
+}
+
+function buildConsiderations(x: EditorialInput): string[] {
+  const out: string[] = [];
+  if (x.tier === 'Unrated') out.push('Not yet enough verified reviews to earn a Rated badge');
+  if (x.reviewCount < 5) out.push(`Only ${x.reviewCount} first-party review${x.reviewCount === 1 ? '' : 's'} on TechFirms so far`);
+  if (x.externalAverage != null && x.externalAverage < 4.0) out.push(`Public rating is middling (${x.externalAverage.toFixed(1)}★)`);
+  if (x.employeeSentiment != null && x.employeeSentiment < 3.8) out.push(`Employee sentiment is mixed (${x.employeeSentiment.toFixed(1)}/5)`);
+  if (x.quadrant === 'Challengers') out.push('Broad reach, but client satisfaction trails the top tier');
+  if (x.quadrant === 'Niche_Players') out.push('Operates in a narrower niche');
+  if (x.certifications.length === 0) out.push('No public certifications listed');
+  if (out.length === 0) out.push('No major red flags across the available signals');
+  return out.slice(0, 4);
+}
+
+function buildBestFor(x: EditorialInput): string | null {
+  if (x.topServices.length === 0) return null;
+  const services = x.topServices.slice(0, 2).join(' or ');
+  const big = (x.employeeMax ?? x.employeeMin ?? 0) >= 800 || (x.minProject != null && x.minProject >= 40000);
+  const small = (x.employeeMax ?? x.employeeMin ?? 9999) < 150 || (x.minProject != null && x.minProject <= 12000);
+  const audience = big
+    ? 'larger organizations running enterprise-grade programs'
+    : small
+      ? 'startups and smaller, budget-conscious projects'
+      : 'mid-market teams';
+  return `Best suited for ${audience} that need ${services}.`;
+}
+
+export function buildEditorial(x: EditorialInput): Editorial {
+  return {
+    verdict: buildVerdict(x),
+    strengths: buildStrengths(x),
+    considerations: buildConsiderations(x),
+    bestFor: buildBestFor(x),
+  };
 }
