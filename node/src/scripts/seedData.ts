@@ -32,6 +32,10 @@ async function main() {
   // Cheap + idempotent: guarantees the demo owner, admin, and sample data exist.
   run('node dist/scripts/demoSetup.js');
 
+  // Best-effort: pull real Google ratings for curated companies (no-op without the key,
+  // skips anything already fresh, and never throws out of its own process).
+  run('node dist/scripts/fetchRatings.js');
+
   console.log('[seedData] done.');
 }
 

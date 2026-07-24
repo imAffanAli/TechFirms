@@ -131,6 +131,49 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
       {/* Answer block (GEO) */}
       <p className="mt-4 rounded-lg border border-border bg-muted/40 p-4 text-sm leading-relaxed">{answer}</p>
 
+      {/* Public ratings — real aggregate ratings from third-party platforms (numbers only, attributed) */}
+      {c.externalRatings.length > 0 && (
+        <div className="mt-4 rounded-lg border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            {c.aggregateRating && (
+              <div className="flex items-center gap-2">
+                <StarRating value={c.aggregateRating.average} size={17} />
+                <span className="tabular text-lg font-semibold">{c.aggregateRating.average.toFixed(1)}</span>
+                <span className="text-sm text-muted-foreground">
+                  average{c.aggregateRating.sourceCount > 1 ? ` across ${c.aggregateRating.sourceCount} platforms` : ""}
+                </span>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {c.externalRatings.map((r) =>
+                r.sourceUrl ? (
+                  <a
+                    key={r.source}
+                    href={r.sourceUrl}
+                    target="_blank"
+                    rel="nofollow noopener"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 hover:bg-muted"
+                  >
+                    <span className="font-medium capitalize">{r.source}</span>
+                    <span className="tabular">{r.rating.toFixed(1)}★</span>
+                    <span className="text-muted-foreground">({r.ratingCount.toLocaleString()})</span>
+                  </a>
+                ) : (
+                  <span key={r.source} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1">
+                    <span className="font-medium capitalize">{r.source}</span>
+                    <span className="tabular">{r.rating.toFixed(1)}★</span>
+                    <span className="text-muted-foreground">({r.ratingCount.toLocaleString()})</span>
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Public ratings aggregated from third-party platforms — we show the average and link to each source, and never copy individual reviews.
+          </p>
+        </div>
+      )}
+
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_300px]">
         {/* Main content */}
         <div className="min-w-0 space-y-10">

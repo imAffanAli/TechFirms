@@ -99,6 +99,20 @@ export interface TrustSignals {
   crunchbaseUrl: string | null;
 }
 
+export interface ExternalRating {
+  source: string; // 'google' | 'trustpilot' | ...
+  rating: number; // 0..5
+  ratingCount: number;
+  sourceUrl: string | null;
+  fetchedAt: string;
+}
+
+export interface AggregateRating {
+  average: number;
+  totalCount: number;
+  sourceCount: number;
+}
+
 export interface IntelligenceScore {
   cis: number;
   reviewsScore: number;
@@ -140,6 +154,8 @@ export interface CompanyDetail {
   employeeSentiment: EmployeeSentiment | null;
   trustSignals: TrustSignals | null;
   offices: { country: PlaceRef | null; city: PlaceRef | null; isHeadquarters: boolean }[];
+  externalRatings: ExternalRating[];
+  aggregateRating: AggregateRating | null;
 }
 
 export interface ServiceItem { slug: string; name: string; category: string; companyCount: number }

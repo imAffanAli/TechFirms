@@ -12,6 +12,7 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   DIRECT_URL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
   JWT_SECRET: z.string().min(16).default('dev-insecure-jwt-secret-change-me-in-production'),
 });
 

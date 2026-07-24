@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { aggregateExternalRatings } from './ratingsService.js';
 
 // ── helpers ──────────────────────────────────────────────
 const dec = (v: Prisma.Decimal | null | undefined): number | null => (v == null ? null : Number(v));
@@ -126,6 +127,7 @@ export async function getCompanyBySlug(slug: string) {
       employeeReviews: { orderBy: { rating: 'desc' }, take: 5 },
       trustSignals: { orderBy: { asOf: 'desc' }, take: 1 },
       offices: { include: { country: true, city: true } },
+      externalRatings: { orderBy: { source: 'asc' } },
     },
   });
   if (!c) return null;
@@ -225,6 +227,14 @@ export async function getCompanyBySlug(slug: string) {
       city: o.city ? { slug: o.city.slug, name: o.city.name } : null,
       isHeadquarters: o.isHeadquarters,
     })),
+    externalRatings: c.externalRatings.map((r) => ({
+      source: r.source,
+      rating: r.rating,
+      ratingCount: r.ratingCount,
+      sourceUrl: r.sourceUrl,
+      fetchedAt: r.fetchedAt,
+    })),
+    aggregateRating: aggregateExternalRatings(c.externalRatings),
   };
 }
 

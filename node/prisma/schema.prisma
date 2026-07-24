@@ -177,6 +177,7 @@ model Company {
   queryMatches      QueryMatch[]
   directQueries     Query[]             @relation("QueryDirectTarget")
   rawRecords        RawScrapeRecord[]
+  externalRatings   ExternalRating[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -520,6 +521,25 @@ model Sponsorship {
 
   @@index([companyId])
   @@index([active, endsAt])
+}
+
+/// Aggregate star rating from a public third-party platform (Google, Trustpilot, …).
+/// We store the NUMBER (a fact) + attribution/link only — never the individual review prose.
+model ExternalRating {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  source      String // 'google' | 'trustpilot' | ...
+  rating      Float // 0..5
+  ratingCount Int      @default(0)
+  externalId  String? // e.g. Google place_id
+  sourceUrl   String? // link back to the source (attribution)
+  fetchedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, source])
+  @@index([companyId])
 }
 
 // ─────────────────────────── Audit ───────────────────────────

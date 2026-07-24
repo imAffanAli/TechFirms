@@ -22,6 +22,7 @@
     "pipeline:import": "tsx src/scripts/importCompanies.ts",
     "scores:recompute": "tsx src/scripts/recomputeScores.ts",
     "demo:setup": "tsx src/scripts/demoSetup.ts",
+    "ratings:fetch": "tsx src/scripts/fetchRatings.ts",
     "deploy:bootstrap": "tsx src/scripts/deployBootstrap.ts"
   },
   "dependencies": {
