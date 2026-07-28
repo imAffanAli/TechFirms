@@ -14,9 +14,9 @@ export function CompanyCard({ c }: { c: Card }) {
   const location = [c.hqCity?.name, c.hqCountry?.name].filter(Boolean).join(", ");
 
   return (
-    <div className="flex flex-col rounded-lg border border-border bg-card p-5 transition-shadow hover:shadow-md">
+    <div className="flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-shadow hover:shadow-md">
       <div className="flex items-start gap-4">
-        <LogoAvatar name={c.name} logoUrl={c.logoUrl} size={48} />
+        <LogoAvatar name={c.name} domain={c.domain} logoUrl={c.logoUrl} size={48} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Link href={`/companies/${c.slug}`} className="truncate font-semibold hover:text-primary">
@@ -63,7 +63,7 @@ export function CompanyCard({ c }: { c: Card }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-2">
+      <div className="mt-auto flex items-center justify-between gap-2 pt-4">
         <span className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
           {location && (
             <>

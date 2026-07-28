@@ -14,6 +14,7 @@ export interface CompanyCard {
   slug: string;
   name: string;
   logoUrl: string | null;
+  domain: string | null;
   tagline: string | null;
   website: string | null;
   listingStatus: ListingStatus;
@@ -138,6 +139,7 @@ export interface CompanyDetail {
   slug: string;
   name: string;
   logoUrl: string | null;
+  domain: string | null;
   tagline: string | null;
   description: string | null;
   website: string | null;

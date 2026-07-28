@@ -20,7 +20,7 @@ export function SponsoredStrip({ items }: { items: SponsoredCard[] }) {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {items.map((c) => (
-          <div key={c.sponsorshipId} onClick={() => track(c.sponsorshipId)} className="rounded-lg ring-1 ring-warning/40">
+          <div key={c.sponsorshipId} onClick={() => track(c.sponsorshipId)} className="h-full rounded-lg ring-1 ring-warning/40">
             <CompanyCard c={c} />
           </div>
         ))}

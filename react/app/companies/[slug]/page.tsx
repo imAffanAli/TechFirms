@@ -108,7 +108,7 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
 
       {/* Header */}
       <div className="mt-4 flex flex-col gap-5 rounded-xl border border-border bg-card p-6 sm:flex-row sm:items-start">
-        <LogoAvatar name={c.name} logoUrl={c.logoUrl} size={72} />
+        <LogoAvatar name={c.name} domain={c.domain} logoUrl={c.logoUrl} size={72} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">{c.name}</h1>
