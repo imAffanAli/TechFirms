@@ -25,7 +25,7 @@ export interface RawCompany {
   minProject: number; // USD
   reviews: RawReview[];
   employeeReviews: RawEmployeeReview[];
-  sentiment: { overall: number; culture: number; comp: number; wlb: number; leadership: number; recommendPct: number; reviewCount: number };
+  sentiment?: { overall: number; culture: number; comp: number; wlb: number; leadership: number; recommendPct: number; reviewCount: number };
   trust: { domainAgeYears?: number; ssl?: boolean; github?: number; certs: string[]; funding: number };
 }
 
@@ -65,11 +65,12 @@ function computeScore(raw: RawCompany, trustDomainAge: number) {
   const overalls = raw.reviews.map((r) => r.overall);
   const reviewsAvg = overalls.length ? overalls.reduce((a, b) => a + b, 0) / overalls.length : 3.5;
   const reviewsScore = Math.round((reviewsAvg / 5) * 100);
-  const sentimentScore = Math.round((raw.sentiment.overall / 5) * 100);
+  const sentimentScore = raw.sentiment ? Math.round((raw.sentiment.overall / 5) * 100) : 50;
+  const sentReviewCount = raw.sentiment?.reviewCount ?? 0;
   const trustScore = Math.min(100, Math.round(trustDomainAge * 4 + (raw.trust.ssl ? 15 : 0) + raw.trust.certs.length * 8 + (raw.trust.funding > 0 ? 20 : 0) + Math.min(20, (raw.trust.github ?? 0) / 40)));
-  const marketScore = Math.min(100, Math.round(raw.reviews.length * 7 + raw.sentiment.reviewCount * 0.4));
+  const marketScore = Math.min(100, Math.round(raw.reviews.length * 7 + sentReviewCount * 0.4));
   const cis = Math.round(0.4 * reviewsScore + 0.25 * sentimentScore + 0.2 * trustScore + 0.15 * marketScore);
-  const marketPresence = Math.min(100, Math.round(raw.reviews.length * 6 + trustScore * 0.4 + raw.sentiment.reviewCount * 0.3));
+  const marketPresence = Math.min(100, Math.round(raw.reviews.length * 6 + trustScore * 0.4 + sentReviewCount * 0.3));
   const clientSatisfaction = reviewsScore;
   const verified = raw.reviews.filter((r) => r.verified).length;
   const quadrant: Quadrant = marketPresence >= 50 ? (clientSatisfaction >= 88 ? 'Leaders' : 'Challengers') : clientSatisfaction >= 88 ? 'Rising_Stars' : 'Niche_Players';
@@ -190,7 +191,9 @@ export async function ingestCompany(raw: RawCompany, sourceName: string, baseUrl
       });
     }
     await prisma.trustSignal.create({ data: { companyId: company.id, domainAgeYears: enrichedAge, sslValid: raw.trust.ssl ?? true, githubOrgActivity: raw.trust.github ?? null, certifications: raw.trust.certs, fundingRaised: raw.trust.funding } });
-    await prisma.employeeSentiment.create({ data: { companyId: company.id, overallRating: raw.sentiment.overall, culture: raw.sentiment.culture, compensation: raw.sentiment.comp, workLifeBalance: raw.sentiment.wlb, leadership: raw.sentiment.leadership, recommendPct: raw.sentiment.recommendPct, reviewCount: raw.sentiment.reviewCount, sourceName: 'glassdoor', sourceUrl: `https://www.glassdoor.com/${kebab(raw.name)}`, asOf: new Date('2026-06-01') } });
+    if (raw.sentiment) {
+      await prisma.employeeSentiment.create({ data: { companyId: company.id, overallRating: raw.sentiment.overall, culture: raw.sentiment.culture, compensation: raw.sentiment.comp, workLifeBalance: raw.sentiment.wlb, leadership: raw.sentiment.leadership, recommendPct: raw.sentiment.recommendPct, reviewCount: raw.sentiment.reviewCount, sourceName: 'glassdoor', sourceUrl: `https://www.glassdoor.com/${kebab(raw.name)}`, asOf: new Date('2026-06-01') } });
+    }
     for (const er of raw.employeeReviews) {
       await prisma.employeeReview.create({ data: { companyId: company.id, rating: Math.round(er.rating * 100), title: er.title, pros: er.pros, cons: er.cons, role: er.role, isCurrentEmployee: er.current, source: 'sample', sourceUrl: `https://www.glassdoor.com/${kebab(raw.name)}` } });
     }

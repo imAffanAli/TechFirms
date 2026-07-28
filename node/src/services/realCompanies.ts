@@ -1,13 +1,12 @@
 import type { RawCompany } from './pipeline.js';
 import { kebab } from './pipeline.js';
-import { genClientReviews, genEmployeeReviews } from './content.js';
 
 /**
  * Curated real, notable technology companies in Pakistan and Saudi Arabia.
- * FACTUAL fields (name, HQ, founding year, website, services, approx. size) are real/public;
- * reviews, employee sentiment, and the CIS are DEMO content generated like the rest of the
- * seed data — they are NOT real ratings of these companies. For a real launch these must come
- * from verified first-party reviews (see docs/08 + docs/02).
+ * ALL fields here are real/public facts (name, HQ, founding year, website, services, approx.
+ * size, certifications, funding). These companies carry NO fabricated reviews or sentiment —
+ * client + employee reviews are first-party only (collected on-platform), public ratings come
+ * from Google (see ratingsService), and domain age is enriched from real RDAP data.
  */
 interface RealSpec {
   name: string;
@@ -65,21 +64,7 @@ const KSA: RealSpec[] = [
   { name: 'Rasan', city: 'riyadh', founded: 2016, emp: [300, 400], services: [{ slug: 'custom-software', focus: 100 }], domain: 'rasan.sa', rate: [45, 100], minProject: 20000, certs: [], funding: 224000000, quality: 0.81 },
 ];
 
-// small deterministic PRNG so reviews are stable across runs
-function rng(seed: number) {
-  return () => {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function build(spec: RealSpec, countrySlug: string, idx: number): RawCompany {
-  const r = rng(1000 + idx);
-  const reviews = genClientReviews(5 + Math.floor(r() * 4), spec.quality, r);
-  const employeeReviews = genEmployeeReviews(4 + Math.floor(r() * 2), spec.quality, r);
+function build(spec: RealSpec, countrySlug: string): RawCompany {
   return {
     sourceId: `real-${countrySlug}-${kebab(spec.name)}`,
     url: `https://${spec.domain}`,
@@ -93,30 +78,21 @@ function build(spec: RealSpec, countrySlug: string, idx: number): RawCompany {
     employeeRange: spec.emp,
     hourlyRate: spec.rate,
     minProject: spec.minProject,
-    reviews,
-    employeeReviews,
-    sentiment: {
-      overall: Math.round((3.7 + spec.quality * 0.9) * 10) / 10,
-      culture: Math.round((3.8 + spec.quality * 0.8) * 10) / 10,
-      comp: Math.round((3.7 + spec.quality * 0.7) * 10) / 10,
-      wlb: Math.round((3.7 + spec.quality * 0.6) * 10) / 10,
-      leadership: Math.round((3.8 + spec.quality * 0.8) * 10) / 10,
-      recommendPct: Math.round(70 + spec.quality * 26),
-      reviewCount: Math.round(40 + spec.quality * 200),
-    },
+    // No fabricated reviews or sentiment — first-party only + Google ratings.
+    reviews: [],
+    employeeReviews: [],
     trust: {
-      domainAgeYears: Math.min(30, 2026 - spec.founded),
+      // domainAgeYears omitted → enriched from real RDAP registration data
       ssl: true,
-      github: Math.round(150 + spec.quality * 700),
-      certs: spec.certs,
-      funding: spec.funding,
+      certs: spec.certs, // real, public certifications
+      funding: spec.funding, // real, publicly reported funding (0 if none)
     },
   };
 }
 
 export function realCompanies(): { raw: RawCompany; source: string }[] {
   const out: { raw: RawCompany; source: string }[] = [];
-  PK.forEach((s, i) => out.push({ raw: build(s, 'pakistan', i), source: 'curated' }));
-  KSA.forEach((s, i) => out.push({ raw: build(s, 'saudi-arabia', i + 100), source: 'curated' }));
+  PK.forEach((s) => out.push({ raw: build(s, 'pakistan'), source: 'curated' }));
+  KSA.forEach((s) => out.push({ raw: build(s, 'saudi-arabia'), source: 'curated' }));
   return out;
 }

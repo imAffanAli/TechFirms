@@ -26,6 +26,8 @@ function median(nums: number[]): number {
 export interface ReviewRow { ratingOverall: number; reviewedAt: Date; verified: boolean }
 export interface ScoreInputs {
   reviews: ReviewRow[];
+  externalRating: { average: number; count: number } | null; // real public rating (Google, …)
+  employeeCount: number | null; // real company size, for market presence
   sentimentOverall: number | null; // 0–5
   sentimentReviewCount: number;
   trust: { domainAgeYears: number | null; sslValid: boolean | null; githubOrgActivity: number | null; certCount: number; funding: number | null } | null;
@@ -61,6 +63,12 @@ export function scoreCompany(inp: ScoreInputs, now: Date): CompanyScore {
     if (age <= 18) recentCount += 1;
     if (r.verified) verifiedCount += 1;
   }
+  // Fold the real public (Google) rating into client satisfaction — strong but capped.
+  if (inp.externalRating && inp.externalRating.count > 0) {
+    const w = Math.min(inp.externalRating.count, 80) * 0.6;
+    num += inp.externalRating.average * w;
+    den += w;
+  }
   const bayes = num / den; // 1–5
   const reviewsScore = clamp100((bayes / 5) * 100);
   const clientSatisfaction = reviewsScore;
@@ -75,8 +83,10 @@ export function scoreCompany(inp: ScoreInputs, now: Date): CompanyScore {
     trustScore = clamp100(10 + age * 3 + (inp.trust.sslValid ? 12 : 0) + inp.trust.certCount * 8 + (inp.trust.funding && inp.trust.funding > 0 ? 16 : 0) + Math.min(18, (inp.trust.githubOrgActivity ?? 0) / 40));
   }
 
-  // ── Market activity (review breadth + sentiment volume) ──
-  const marketScore = clamp100(inp.reviews.length * 6 + recentCount * 3 + inp.sentimentReviewCount * 0.35);
+  // ── Market activity (review breadth + public-rating volume + company size) ──
+  const extCount = inp.externalRating?.count ?? 0;
+  const emp = inp.employeeCount ?? 0;
+  const marketScore = clamp100(inp.reviews.length * 6 + recentCount * 3 + inp.sentimentReviewCount * 0.35 + Math.min(45, extCount / 5) + Math.min(20, emp / 100));
 
   // ── Composite with renormalized weights for missing signals ──
   let wsum = W.reviews;
@@ -87,10 +97,11 @@ export function scoreCompany(inp: ScoreInputs, now: Date): CompanyScore {
   const cis = clamp100(acc / wsum);
 
   // ── Leaderboard axes ──
-  const marketPresence = clamp100(inp.reviews.length * 4 + (trustScore ?? 0) * 0.4 + inp.sentimentReviewCount * 0.25);
+  const marketPresence = clamp100(inp.reviews.length * 4 + (trustScore ?? 0) * 0.4 + inp.sentimentReviewCount * 0.25 + Math.min(50, extCount / 4) + Math.min(20, emp / 150));
 
-  // ── Eligibility gate (canon: ≥5 verified & ≥3 recent; relaxed to ≥3 for the demo dataset) ──
-  const tier: ScoreTier = verifiedCount >= 3 && recentCount >= 3 ? 'Rated' : 'Unrated';
+  // ── Eligibility gate: enough first-party verified reviews, OR a substantial public rating. ──
+  const hasPublicRating = extCount >= 20;
+  const tier: ScoreTier = (verifiedCount >= 3 && recentCount >= 3) || hasPublicRating ? 'Rated' : 'Unrated';
 
   return { reviewsScore, sentimentScore, trustScore, marketScore, cis, marketPresence, clientSatisfaction, tier, reviewCount: inp.reviews.length, verifiedCount, recentCount };
 }
@@ -110,8 +121,11 @@ export async function recomputeAllScores(now = new Date()): Promise<{ scored: nu
     select: {
       id: true,
       hqCountryId: true,
+      employeeRangeMin: true,
+      employeeRangeMax: true,
       services: { select: { serviceId: true, focusPct: true }, orderBy: { focusPct: 'desc' }, take: 1 },
-      reviews: { where: { deletedAt: null }, select: { ratingOverall: true, reviewedAt: true, verified: true } },
+      reviews: { where: { deletedAt: null, flagged: false }, select: { ratingOverall: true, reviewedAt: true, verified: true } },
+      externalRatings: { select: { rating: true, ratingCount: true } },
       employeeSentiment: { orderBy: { asOf: 'desc' }, take: 1, select: { overallRating: true, reviewCount: true } },
       trustSignals: { orderBy: { asOf: 'desc' }, take: 1, select: { domainAgeYears: true, sslValid: true, githubOrgActivity: true, certifications: true, fundingRaised: true } },
     },
@@ -121,9 +135,14 @@ export async function recomputeAllScores(now = new Date()): Promise<{ scored: nu
   const rows = companies.map((c) => {
     const ts = c.trustSignals[0];
     const es = c.employeeSentiment[0];
+    const ext = c.externalRatings.length
+      ? { average: c.externalRatings.reduce((a, r) => a + r.rating, 0) / c.externalRatings.length, count: c.externalRatings.reduce((a, r) => a + r.ratingCount, 0) }
+      : null;
     const score = scoreCompany(
       {
         reviews: c.reviews,
+        externalRating: ext,
+        employeeCount: c.employeeRangeMax ?? c.employeeRangeMin ?? null,
         sentimentOverall: es ? Number(es.overallRating) : null,
         sentimentReviewCount: es?.reviewCount ?? 0,
         trust: ts ? { domainAgeYears: ts.domainAgeYears != null ? Number(ts.domainAgeYears) : null, sslValid: ts.sslValid, githubOrgActivity: ts.githubOrgActivity, certCount: Array.isArray(ts.certifications) ? ts.certifications.length : 0, funding: ts.fundingRaised } : null,
@@ -176,7 +195,7 @@ export async function recomputeAllScores(now = new Date()): Promise<{ scored: nu
       computedAt: now,
     } satisfies Prisma.IntelligenceScoreUncheckedUpdateInput;
 
-    const justification = `Company Intelligence Score of ${s.cis}/100 (${quadrant.replace('_', ' ')}) — reviews ${s.reviewsScore}/100${s.sentimentScore != null ? `, employee sentiment ${s.sentimentScore}/100` : ''}${s.trustScore != null ? `, trust ${s.trustScore}/100` : ''}, market activity ${s.marketScore}/100, from ${s.reviewCount} reviews (${s.verifiedCount} verified). Weights 40/25/20/15; ${s.tier === 'Rated' ? 'meets' : 'below'} the eligibility gate.`;
+    const justification = `Company Intelligence Score of ${s.cis}/100 (${quadrant.replace('_', ' ')}) — client satisfaction ${s.clientSatisfaction}/100${s.trustScore != null ? `, trust ${s.trustScore}/100` : ''}, market presence ${s.marketPresence}/100. Built from public ratings and ${s.reviewCount} first-party review${s.reviewCount === 1 ? '' : 's'}; ${s.tier === 'Rated' ? 'meets' : 'below'} the rating threshold.`;
 
     await prisma.intelligenceScore.upsert({
       where: { companyId: r.id },

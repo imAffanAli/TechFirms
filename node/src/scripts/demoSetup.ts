@@ -50,12 +50,7 @@ async function main() {
     }
   }
 
-  // 4) Sample leads so the admin queue + owner dashboard aren't empty (idempotent by email)
-  if (owned && !(await prisma.query.findFirst({ where: { contactEmail: 'bilal@fintechpk.example' } }))) {
-    await prisma.query.create({ data: { projectType: 'Mobile banking app', description: 'We need a secure mobile banking app with biometric login for a Pakistani fintech startup.', contactName: 'Bilal Ahmed', contactEmail: 'bilal@fintechpk.example', budgetMin: 30000, budgetMax: 80000, budgetCurrency: 'USD', timeline: '4 months', directCompanyId: owned.id, status: 'New' } });
-    const aiSvc = await prisma.service.findUnique({ where: { slug: 'ai-development' } });
-    await prisma.query.create({ data: { projectType: 'AI customer-support assistant', description: 'Looking for a team to build an Arabic + English AI support assistant for our e-commerce platform.', contactName: 'Sara Al-Otaibi', contactEmail: 'sara@shopgulf.example', budgetMin: 25000, budgetMax: 60000, budgetCurrency: 'USD', timeline: '3 months', serviceCategory: aiSvc?.category ?? null, status: 'New' } });
-  }
+  // (No fake leads/reviews — the owner + admin dashboards start empty and fill with real activity.)
 
   console.log(`Demo setup complete. Owner: ${OWNER_EMAIL} / ${OWNER_PASSWORD} (owns ${OWNED_SLUG}).`);
 }
