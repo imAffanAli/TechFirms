@@ -15,6 +15,7 @@ async function main() {
   run('node dist/scripts/seed.js'); // base taxonomy (services, countries) + admin
   run('node dist/scripts/importCompanies.js'); // curated REAL companies
   run('node dist/scripts/purgeDemoData.js'); // remove any leftover demo/generated data
+  run('node dist/scripts/discoverCompanies.js'); // grow with REAL companies via Google Places (gated)
   run('node dist/scripts/demoSetup.js'); // demo owner + sponsored placements (idempotent)
   run('node dist/scripts/fetchRatings.js'); // real Google ratings (no-op without the key)
   run('node dist/scripts/recomputeScores.js'); // scores from real signals (ratings + facts)
