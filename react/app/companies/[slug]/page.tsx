@@ -270,6 +270,12 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
                     </div>
                   </div>
                   {r.body && <p className="mt-2 text-sm text-muted-foreground">“{r.body}”</p>}
+                  {r.companyReply && (
+                    <div className="mt-3 rounded-md border-l-2 border-brand-500 bg-muted/40 p-3">
+                      <div className="text-xs font-semibold text-muted-foreground">Response from {c.name}</div>
+                      <p className="mt-1 text-sm text-muted-foreground">{r.companyReply}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

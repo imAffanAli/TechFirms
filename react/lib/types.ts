@@ -64,6 +64,8 @@ export interface Review {
   verified: boolean;
   reviewedAt: string;
   projectDurationMonths: number | null;
+  companyReply: string | null;
+  companyReplyAt: string | null;
 }
 
 export interface EmployeeReview {

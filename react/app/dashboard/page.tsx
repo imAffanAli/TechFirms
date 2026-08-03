@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { CompanyEditor } from "@/components/company-editor";
 import { InviteForm } from "@/components/invite-form";
+import { TeamManager } from "@/components/team-manager";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +83,9 @@ export default async function Dashboard() {
                 <div className="text-sm font-medium">Invite a client to leave a verified review</div>
                 <p className="mb-2 text-xs text-muted-foreground">Generates a unique one-time review link.</p>
                 <InviteForm slug={c.slug} />
+              </div>
+              <div className="mt-5 border-t border-border pt-4">
+                <TeamManager slug={c.slug} />
               </div>
             </div>
           ))}
