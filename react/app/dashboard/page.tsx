@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { CompanyEditor } from "@/components/company-editor";
 import { InviteForm } from "@/components/invite-form";
 import { TeamManager } from "@/components/team-manager";
+import { SponsorshipUpgrade } from "@/components/sponsorship-upgrade";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -86,6 +87,9 @@ export default async function Dashboard() {
               </div>
               <div className="mt-5 border-t border-border pt-4">
                 <TeamManager slug={c.slug} />
+              </div>
+              <div className="mt-5 border-t border-border pt-4">
+                <SponsorshipUpgrade slug={c.slug} />
               </div>
             </div>
           ))}

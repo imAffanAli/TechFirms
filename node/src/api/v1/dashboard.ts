@@ -10,9 +10,40 @@ import {
   listInvitations,
 } from '../../services/dashboardService.js';
 import { listTeam, inviteMember, changeMemberRole, removeMember, revokeInvitation, replyToReview } from '../../services/teamService.js';
+import { listPlans, createOrder, listCompanyOrders } from '../../services/sponsorshipOrderService.js';
 
 export const dashboardRouter = Router();
 dashboardRouter.use(requireRole('business_owner', 'admin', 'super_admin'));
+
+const SERVICE_CATEGORIES = ['ai_development', 'custom_software', 'web_development', 'mobile_app_development', 'cloud', 'devops', 'data_engineering', 'cybersecurity', 'it_staff_augmentation', 'ui_ux_design'] as const;
+
+// ── Self-serve sponsorship ──
+dashboardRouter.get('/sponsorship/plans', async (_req, res, next) => {
+  try {
+    res.json({ plans: await listPlans() });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const orderBody = z.object({ planId: z.string(), countryId: z.string().optional(), serviceCategory: z.enum(SERVICE_CATEGORIES).optional() });
+
+dashboardRouter.post('/companies/:slug/sponsorship/order', async (req, res, next) => {
+  try {
+    const b = orderBody.parse(req.body);
+    res.status(201).json(await createOrder(req.user!.sub, req.params.slug, b.planId, { countryId: b.countryId, serviceCategory: b.serviceCategory }));
+  } catch (e) {
+    next(e);
+  }
+});
+
+dashboardRouter.get('/companies/:slug/sponsorship/orders', async (req, res, next) => {
+  try {
+    res.json({ items: await listCompanyOrders(req.user!.sub, req.params.slug) });
+  } catch (e) {
+    next(e);
+  }
+});
 
 // ── Team management (owner/manager) ──
 const teamInvite = z.object({ email: z.string().email(), role: z.enum(['manager', 'editor', 'viewer']).default('manager') });

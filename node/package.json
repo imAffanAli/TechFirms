@@ -24,6 +24,7 @@
     "demo:setup": "tsx src/scripts/demoSetup.ts",
     "ratings:fetch": "tsx src/scripts/fetchRatings.ts",
     "data:purge": "tsx src/scripts/purgeDemoData.ts",
+    "sponsorship:sync": "tsx src/scripts/sponsorshipMaintenance.ts",
     "discover:places": "tsx src/scripts/discoverCompanies.ts",
     "deploy:bootstrap": "tsx src/scripts/deployBootstrap.ts"
   },

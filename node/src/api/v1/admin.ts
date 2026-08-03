@@ -8,6 +8,7 @@ import { listClaims, decideClaim } from '../../services/claimService.js';
 import { assessReview } from '../../services/moderationService.js';
 import { listHeldReviews, moderateReview } from '../../services/communityReviewService.js';
 import { listSponsorships, createSponsorship, setSponsorshipActive } from '../../services/sponsorshipService.js';
+import { listOrders, approveOrder, rejectOrder } from '../../services/sponsorshipOrderService.js';
 import { writeAudit } from '../../utils/audit.js';
 
 export const adminRouter = Router();
@@ -94,6 +95,32 @@ adminRouter.post('/moderate', async (req, res, next) => {
 adminRouter.get('/reviews/held', async (_req, res, next) => {
   try {
     res.json(await listHeldReviews());
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ── Sponsorship orders (self-serve purchases awaiting approval) ──
+const ORDER_STATUSES = ['pending', 'active', 'rejected', 'expired'] as const;
+
+adminRouter.get('/sponsorship-orders', async (req, res, next) => {
+  try {
+    const raw = String(req.query.status ?? '');
+    const status = (ORDER_STATUSES as readonly string[]).includes(raw) ? (raw as (typeof ORDER_STATUSES)[number]) : undefined;
+    res.json({ items: await listOrders(status) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const orderDecision = z.object({ decision: z.enum(['approve', 'reject']) });
+
+adminRouter.patch('/sponsorship-orders/:id', async (req, res, next) => {
+  try {
+    const { decision } = orderDecision.parse(req.body);
+    const result = decision === 'approve' ? await approveOrder(req.user!.sub, req.params.id) : await rejectOrder(req.user!.sub, req.params.id);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: `sponsorship_order.${decision}`, entityType: 'SponsorshipOrder', entityId: req.params.id, ipAddress: req.ip ?? null });
+    res.json(result);
   } catch (e) {
     next(e);
   }

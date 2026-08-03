@@ -181,6 +181,7 @@ model Company {
   externalRatings   ExternalRating[]
   members           CompanyMember[]
   invitations       CompanyInvitation[]
+  sponsorshipOrders SponsorshipOrder[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -527,6 +528,8 @@ model Sponsorship {
   active          Boolean          @default(true)
   impressions     Int              @default(0) // ROI proof
   clicks          Int              @default(0)
+  planId          String?
+  order           SponsorshipOrder?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -608,6 +611,65 @@ model CompanyInvitation {
   updatedAt    DateTime         @updatedAt
 
   @@index([companyId, status])
+}
+
+// ─────────────────────────── Sponsorship monetization ───────────────────────────
+
+enum OrderStatus {
+  pending // awaiting payment / admin approval
+  active // paid + sponsorship live
+  rejected
+  cancelled
+  expired
+}
+
+enum PaymentMethod {
+  manual_invoice
+  stripe
+  admin_grant
+}
+
+/// A purchasable sponsorship plan: a tier at a given duration + price.
+model SponsorshipPlan {
+  id            String             @id @default(cuid())
+  tier          SponsorshipTier
+  durationDays  Int
+  priceAmount   Int // minor units (USD cents)
+  priceCurrency String             @default("USD")
+  active        Boolean            @default(true)
+  orders        SponsorshipOrder[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([tier, durationDays])
+}
+
+/// A company's purchase of a plan. In manual mode it awaits admin approval; on approval a
+/// live Sponsorship is created with start/end dates. Ranking/CIS are never affected.
+model SponsorshipOrder {
+  id              String           @id @default(cuid())
+  companyId       String
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  requestedById   String
+  planId          String
+  plan            SponsorshipPlan  @relation(fields: [planId], references: [id])
+  tier            SponsorshipTier
+  durationDays    Int
+  countryId       String?
+  serviceCategory ServiceCategory?
+  amount          Int // minor units, snapshot of the price paid
+  currency        String           @default("USD")
+  status          OrderStatus      @default(pending)
+  paymentMethod   PaymentMethod?
+  sponsorshipId   String?          @unique
+  sponsorship     Sponsorship?     @relation(fields: [sponsorshipId], references: [id])
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([companyId])
+  @@index([status])
 }
 
 // ─────────────────────────── Audit ───────────────────────────

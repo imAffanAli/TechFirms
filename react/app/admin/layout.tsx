@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/claims", label: "Claims" },
   { href: "/admin/moderate", label: "Moderation" },
   { href: "/admin/reviews", label: "Review queue" },
+  { href: "/admin/sponsorship-orders", label: "Sponsorship orders" },
   { href: "/admin/sponsorships", label: "Sponsorships" },
 ];
 const SOON = ["Companies"];
