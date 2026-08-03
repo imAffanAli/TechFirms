@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { CompanyRole } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { sendTeamInvite } from './emailService.js';
 
 /**
  * Company team accounts (RBAC). CompanyMember is the source of truth for authorization;
@@ -66,7 +67,9 @@ export async function inviteMember(userId: string, slug: string, email: string, 
   } else {
     await prisma.companyInvitation.create({ data: { companyId: company.id, email, role, token, invitedById: userId, expiresAt } });
   }
-  return { token, link: `/team/accept/${token}` };
+  const link = `/team/accept/${token}`;
+  await sendTeamInvite(email, company.name, role, link).catch(() => {});
+  return { token, link };
 }
 
 export async function getInvitation(token: string) {

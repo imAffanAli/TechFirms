@@ -1,6 +1,7 @@
 import type { Prisma, QueryStatus } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { isAiEnabled, explainMatches } from './ai.js';
+import { sendLeadNotification } from './emailService.js';
 
 export interface CreateQueryInput {
   projectType: string;
@@ -72,6 +73,19 @@ export async function createQuery(input: CreateQueryInput) {
       const reasons = await explainMatches(input.description, firms.map((f) => ({ name: f.name, services: f.services.map((s) => s.service.slug), cis: f.intelligenceScore?.cis ?? 0 })));
       if (reasons) matches = matches.map((m) => ({ ...m, reason: reasons[m.name] }));
     }
+  }
+
+  // Notify the target/matched companies' owners of the new lead (best-effort; no-op without a key).
+  try {
+    const notifyIds = directCompanyId
+      ? [directCompanyId]
+      : (await prisma.queryMatch.findMany({ where: { queryId: query.id }, select: { companyId: true } })).map((m) => m.companyId);
+    if (notifyIds.length) {
+      const owners = await prisma.company.findMany({ where: { id: { in: notifyIds }, ownerId: { not: null } }, select: { name: true, owner: { select: { email: true } } } });
+      await Promise.all(owners.map((o) => (o.owner?.email ? sendLeadNotification(o.owner.email, o.name, input.projectType) : Promise.resolve(false))));
+    }
+  } catch {
+    /* notifications are best-effort */
   }
 
   return { id: query.id, direct: !!directCompanyId, matches };

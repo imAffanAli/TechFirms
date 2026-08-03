@@ -13,6 +13,9 @@ const schema = z.object({
   DIRECT_URL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  APP_URL: z.string().optional(), // public site URL, for links in emails
   JWT_SECRET: z.string().min(16).default('dev-insecure-jwt-secret-change-me-in-production'),
 });
 

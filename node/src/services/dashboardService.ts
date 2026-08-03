@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { effectiveRole, myCompanyIds } from './teamService.js';
+import { sendReviewInvite } from './emailService.js';
 
 const INVITE_TTL_DAYS = 30;
 function httpError(status: number, message: string) {
@@ -105,7 +106,9 @@ export async function createInvitation(userId: string, slug: string, clientEmail
   const company = await assertOwner(userId, slug);
   const token = randomBytes(16).toString('hex');
   await prisma.reviewInvitation.create({ data: { companyId: company.id, token, clientEmail, clientName: clientName ?? null } });
-  return { token, link: `/r/${token}` };
+  const link = `/r/${token}`;
+  await sendReviewInvite(clientEmail, company.name, link).catch(() => {});
+  return { token, link };
 }
 
 export async function listInvitations(userId: string, slug: string) {
