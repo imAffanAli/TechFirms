@@ -216,6 +216,8 @@ export async function getCompanyBySlug(slug: string) {
       verified: r.verified,
       reviewedAt: r.reviewedAt,
       projectDurationMonths: r.projectDurationMonths,
+      companyReply: r.companyReply,
+      companyReplyAt: r.companyReplyAt,
     })),
     employeeReviews: c.employeeReviews.map((er) => ({
       id: er.id,

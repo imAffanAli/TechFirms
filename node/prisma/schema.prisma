@@ -86,6 +86,7 @@ model User {
   supabaseId     String?          @unique // maps to Supabase Auth uid
   ownedCompanies Company[]        @relation("CompanyOwner")
   claims         Claim[]
+  memberships    CompanyMember[]
   reviews        CustomerReview[]
   auditLogs      AuditLog[]
   createdAt      DateTime         @default(now())
@@ -178,6 +179,8 @@ model Company {
   directQueries     Query[]             @relation("QueryDirectTarget")
   rawRecords        RawScrapeRecord[]
   externalRatings   ExternalRating[]
+  members           CompanyMember[]
+  invitations       CompanyInvitation[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -259,6 +262,11 @@ model CustomerReview {
   source     ReviewSource @default(native)
   verified   Boolean      @default(false)
   flagged    Boolean      @default(false) // fraud-detection hold
+
+  // public reply from the company (owner/manager)
+  companyReply       String?   @db.Text
+  companyReplyAt     DateTime?
+  companyRepliedById String?
   // provenance for imported aggregates
   sourceName String?
   sourceId   String?
@@ -543,6 +551,63 @@ model ExternalRating {
 
   @@unique([companyId, source])
   @@index([companyId])
+}
+
+// ─────────────────────────── Team accounts (RBAC) ───────────────────────────
+
+enum CompanyRole {
+  owner
+  manager
+  editor
+  viewer
+}
+
+enum MembershipStatus {
+  active
+  suspended
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  revoked
+  expired
+}
+
+/// A person's role on a company. Company.ownerId stays as a denormalized pointer to the
+/// current owner; CompanyMember is the source of truth for authorization.
+model CompanyMember {
+  id          String           @id @default(cuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        CompanyRole
+  status      MembershipStatus @default(active)
+  invitedById String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@index([companyId, role])
+}
+
+model CompanyInvitation {
+  id           String           @id @default(cuid())
+  companyId    String
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  email        String
+  role         CompanyRole      @default(manager)
+  token        String           @unique
+  invitedById  String
+  status       InvitationStatus @default(pending)
+  acceptedById String?
+  expiresAt    DateTime
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([companyId, status])
 }
 
 // ─────────────────────────── Audit ───────────────────────────

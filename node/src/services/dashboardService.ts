@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { effectiveRole, myCompanyIds } from './teamService.js';
 
 const INVITE_TTL_DAYS = 30;
 function httpError(status: number, message: string) {
@@ -8,8 +9,9 @@ function httpError(status: number, message: string) {
 }
 
 export async function listOwnedCompanies(userId: string) {
+  const ids = await myCompanyIds(userId);
   const rows = await prisma.company.findMany({
-    where: { ownerId: userId, deletedAt: null },
+    where: { id: { in: ids }, deletedAt: null },
     orderBy: { name: 'asc' },
     include: { intelligenceScore: { select: { cis: true } }, _count: { select: { reviews: true } } },
   });
@@ -36,7 +38,8 @@ export async function listOwnedCompanies(userId: string) {
 async function assertOwner(userId: string, slug: string) {
   const company = await prisma.company.findUnique({ where: { slug } });
   if (!company) throw httpError(404, 'Company not found');
-  if (company.ownerId !== userId) throw httpError(403, 'You do not own this company');
+  const role = await effectiveRole(userId, company.id, company.ownerId);
+  if (role !== 'owner' && role !== 'manager') throw httpError(403, 'You do not manage this company');
   return company;
 }
 
@@ -63,8 +66,7 @@ export async function updateOwnedCompany(userId: string, slug: string, patch: Ed
 }
 
 export async function listDashboardQueries(userId: string) {
-  const owned = await prisma.company.findMany({ where: { ownerId: userId }, select: { id: true } });
-  const ids = owned.map((o) => o.id);
+  const ids = await myCompanyIds(userId);
   if (ids.length === 0) return [];
   const rows = await prisma.query.findMany({
     where: { deletedAt: null, OR: [{ directCompanyId: { in: ids } }, { matches: { some: { companyId: { in: ids } } } }] },
@@ -88,8 +90,8 @@ export async function listDashboardQueries(userId: string) {
 }
 
 export async function getDashboardOverview(userId: string) {
-  const companies = await prisma.company.findMany({ where: { ownerId: userId }, select: { id: true, intelligenceScore: { select: { cis: true } } } });
-  const ids = companies.map((c) => c.id);
+  const ids = await myCompanyIds(userId);
+  const companies = await prisma.company.findMany({ where: { id: { in: ids } }, select: { id: true, intelligenceScore: { select: { cis: true } } } });
   const [reviews, queries] = await Promise.all([
     ids.length ? prisma.customerReview.count({ where: { companyId: { in: ids }, deletedAt: null } }) : Promise.resolve(0),
     ids.length ? prisma.query.count({ where: { deletedAt: null, OR: [{ directCompanyId: { in: ids } }, { matches: { some: { companyId: { in: ids } } } }] } }) : Promise.resolve(0),

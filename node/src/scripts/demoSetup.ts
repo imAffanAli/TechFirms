@@ -8,6 +8,7 @@
  */
 import bcrypt from 'bcryptjs';
 import { prisma } from '../db/prisma.js';
+import { ensureOwnerMemberships } from '../services/teamService.js';
 
 const OWNER_EMAIL = 'owner@techfirms.local';
 const OWNER_PASSWORD = 'demo1234';
@@ -52,7 +53,10 @@ async function main() {
 
   // (No fake leads/reviews — the owner + admin dashboards start empty and fill with real activity.)
 
-  console.log(`Demo setup complete. Owner: ${OWNER_EMAIL} / ${OWNER_PASSWORD} (owns ${OWNED_SLUG}).`);
+  // Backfill company team memberships (one owner member per claimed company).
+  const backfilled = await ensureOwnerMemberships();
+
+  console.log(`Demo setup complete. Owner: ${OWNER_EMAIL} / ${OWNER_PASSWORD} (owns ${OWNED_SLUG}). Team memberships backfilled: ${backfilled}.`);
 }
 
 main()
