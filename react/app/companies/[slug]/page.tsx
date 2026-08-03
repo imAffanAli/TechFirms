@@ -11,6 +11,7 @@ import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { QuoteForm } from "@/components/quote-form";
 import { EmployeeReviewForm, ClientReviewForm } from "@/components/review-forms";
+import { ExternalReviews } from "@/components/external-reviews";
 
 export const dynamic = "force-dynamic";
 
@@ -274,6 +275,8 @@ export default async function CompanyProfile({ params }: { params: Promise<{ slu
             </div>
             <div className="mt-5"><ClientReviewForm slug={c.slug} companyName={c.name} /></div>
           </section>
+
+          <ExternalReviews name={c.name} domain={c.domain} googleUrl={c.externalRatings.find((r) => r.source === "google")?.sourceUrl ?? null} />
 
           {/* Employee sentiment */}
           <section id="employees" className="scroll-mt-20">
