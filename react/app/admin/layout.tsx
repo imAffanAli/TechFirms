@@ -13,8 +13,11 @@ const LINKS = [
   { href: "/admin/reviews", label: "Review queue" },
   { href: "/admin/sponsorship-orders", label: "Sponsorship orders" },
   { href: "/admin/sponsorships", label: "Sponsorships" },
+  { href: "/admin/companies", label: "Companies" },
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/audit", label: "Audit log" },
 ];
-const SOON = ["Companies"];
+const SOON: string[] = [];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();

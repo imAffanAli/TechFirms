@@ -7,6 +7,7 @@ import { CompanyEditor } from "@/components/company-editor";
 import { InviteForm } from "@/components/invite-form";
 import { TeamManager } from "@/components/team-manager";
 import { SponsorshipUpgrade } from "@/components/sponsorship-upgrade";
+import { CompletenessMeter } from "@/components/completeness-meter";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +80,7 @@ export default async function Dashboard() {
                   <Badge variant="neutral">{c.reviewCount} reviews</Badge>
                 </div>
               </div>
+              <div className="mt-4"><CompletenessMeter c={c} /></div>
               <div className="mt-4"><CompanyEditor company={c} /></div>
               <div className="mt-5 border-t border-border pt-4">
                 <div className="text-sm font-medium">Invite a client to leave a verified review</div>

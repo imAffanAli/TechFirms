@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { QueryStatus, ClaimStatus } from '@prisma/client';
 import { requireRole } from '../../middleware/auth.js';
-import { getAdminStats } from '../../services/adminService.js';
+import { getAdminStats, listUsers, setUserRole, setUserSuspended, listCompaniesAdmin, setCompanyVerified, listAudit } from '../../services/adminService.js';
 import { listQueries, updateQuery } from '../../services/queryService.js';
 import { listClaims, decideClaim } from '../../services/claimService.js';
 import { assessReview } from '../../services/moderationService.js';
@@ -179,6 +179,58 @@ adminRouter.patch('/sponsorships/:id', async (req, res, next) => {
     const result = await setSponsorshipActive(req.params.id, active);
     await writeAudit({ actorId: req.user?.sub ?? null, action: `sponsorship.${active ? 'activate' : 'deactivate'}`, entityType: 'Sponsorship', entityId: req.params.id, ipAddress: req.ip ?? null });
     res.json(result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ── User management ──
+adminRouter.get('/users', async (req, res, next) => {
+  try {
+    res.json({ items: await listUsers(req.query.search ? String(req.query.search) : undefined) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const userPatch = z.object({ role: z.enum(['visitor', 'business_owner', 'admin', 'super_admin']).optional(), suspended: z.boolean().optional() });
+
+adminRouter.patch('/users/:id', async (req, res, next) => {
+  try {
+    const b = userPatch.parse(req.body);
+    if (b.role) await setUserRole(req.params.id, b.role);
+    if (b.suspended !== undefined) await setUserSuspended(req.params.id, b.suspended);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: 'user.update', entityType: 'User', entityId: req.params.id, metadata: b, ipAddress: req.ip ?? null });
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ── Company management ──
+adminRouter.get('/companies', async (req, res, next) => {
+  try {
+    res.json({ items: await listCompaniesAdmin(req.query.search ? String(req.query.search) : undefined) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.patch('/companies/:slug', async (req, res, next) => {
+  try {
+    const { verified } = z.object({ verified: z.boolean() }).parse(req.body);
+    await setCompanyVerified(req.params.slug, verified);
+    await writeAudit({ actorId: req.user?.sub ?? null, action: `company.${verified ? 'verify' : 'unverify'}`, entityType: 'Company', entityId: req.params.slug, ipAddress: req.ip ?? null });
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ── Audit log ──
+adminRouter.get('/audit', async (_req, res, next) => {
+  try {
+    res.json({ items: await listAudit() });
   } catch (e) {
     next(e);
   }
